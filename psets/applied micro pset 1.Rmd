@@ -1,0 +1,163 @@
+---
+title: "Applied Micro PSET 1"
+author: "Matthew Zhao"
+date: "2023-01-11"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(haven)
+library(stargazer)
+library(xtable)
+options(scipen=999)
+```
+
+## Question 1
+
+### a)
+
+```{r}
+df <- read_stata('data/CARD.DTA')
+```
+
+$$ lwage_i = \beta_0 + \beta_1 educ_i + \beta_3 KWW_i + U_i (1) $$
+
+$$ lwage_i = \beta_0 + \beta_1 HS_i + \beta_2 College_i + \beta_3 KWW_i + U_i$$
+
+```{r}
+df <- df %>%
+  mutate(HS = ifelse((educ >= 12 & educ < 16),1,0),
+         College = ifelse(educ >= 16,1,0))
+
+m1 <- lm(lwage ~ educ + KWW, data = df)
+m2 <- lm(lwage ~ HS + College + KWW, data = df)
+models <- list(m1,m2)
+stargazer(models,type='text',digits=3,
+          title='OLS Estimates for Equations (1) and (2)')
+
+```
+
+For (1), the interpretation of $\beta_1$ is that holding KWW (a proxy for intelligence) fixed, we expect an average approximate increase of 2.1% in wages for each additional year of education. We interpret $\beta_3$ as an expected approximate increase of 1.9% in wages for each additional increase in KWW score holding years of education fixed. 
+
+For (2), the interpretation of $\beta_1$ is that holding KWW (a proxy for intelligence) fixed, we expect an average approximate increase of 12.5% in wages for an individual with only a high school degree. We interpret $\beta_2$ as an expected approximate increase of 19.5% in wages for an individual with a college degree compared to those with no degree holding KWW score fixed. We interpret $\beta_3$ as an expected approximate increase of 1.9% in wages for each additional increase in KWW score holding education level/degree status fixed.  
+
+### b)
+
+The OLS estimator $\hat{\beta}_1$ from (1) is biased because it is unlikely that the assumption $E[U|educ]=0$ since individuals may select into differing amounts of education based on unobservables such as cultural values or family wealth. 
+
+
+### c)
+
+Ideally we would want to measure intelligence (KWW) prior to having any schooling. Otherwise, if we measured intelligence after individuals received schooling, it is likely that MLR.4 will be violated since education could have influenced intelligence. 
+
+### d) 
+
+```{r}
+m1 <- lm(lwage ~ educ + HS + College + KWW, data = df)
+m2 <- lm(lwage ~ educ*HS + educ*College + KWW, data = df)
+
+models <- list(m1,m2)
+stargazer(models,type='text',digits=3,
+          title='OLS Estimates for Additional Specifications')
+```
+
+I prefer model specification (2). This is because when adding education to this model, we see that the coefficient is insignificantly different from zero. This indicates that the degree premia account for the majority of gains to wages from education holding intelligence fixed. **get rid of m2?**
+
+### e)
+
+```{r}
+m1 <- lm(lwage ~ educ + KWW, data = df %>% filter(age == 24))
+m2 <- lm(lwage ~ educ + KWW, data = df %>% filter(age == 28))
+m3 <- lm(lwage ~ educ + KWW, data = df %>% filter(age == 32))
+
+models <- list(m1,m2,m3)
+stargazer(models,type='text',digits=3,
+          title='OLS Estimates for (1) at fixed ages')
+```
+
+```{r}
+m1 <- lm(lwage ~ HS + College + KWW, data = df %>% filter(age == 24))
+m2 <- lm(lwage ~ HS + College + KWW, data = df %>% filter(age == 28))
+m3 <- lm(lwage ~ HS + College + KWW, data = df %>% filter(age == 32))
+
+models <- list(m1,m2,m3)
+stargazer(models,type='text',digits=3,
+          title='OLS Estimates for (2) at fixed ages')
+```
+
+These estimates are generally larger than the estimates from part (a) for ages 28 and 32 and smaller for age 24. They differ because we're conditioning on age **something about OVB and U**.
+
+### f)
+
+```{r}
+m1 <- lm(lwage ~ educ + KWW, data = df %>% filter(exper == 4))
+m2 <- lm(lwage ~ educ + KWW, data = df %>% filter(exper == 8))
+m3 <- lm(lwage ~ educ + KWW, data = df %>% filter(exper == 12))
+
+models <- list(m1,m2,m3)
+stargazer(models,type='text',digits=3,
+          title='OLS Estimates for (1) at fixed experience')
+```
+
+```{r}
+m1 <- lm(lwage ~ HS + College + KWW, data = df %>% filter(exper == 4))
+m2 <- lm(lwage ~ HS + College + KWW, data = df %>% filter(exper == 8))
+m3 <- lm(lwage ~ HS + College + KWW, data = df %>% filter(exper == 12))
+
+models <- list(m1,m2,m3)
+stargazer(models,type='text',digits=3,
+          title='OLS Estimates for (2) at fixed experience')
+```
+
+**EXPLAIN HOW AND WHY ESTIMATES DIFFER FROM (a)**
+
+### g)
+
+$$ lwage_i = \beta_0 + \beta_1 educ_i + \beta_3 KWW_i + \beta_4 exper_i + U_i (1) $$
+
+$$ lwage_i = \beta_0 + \beta_1 HS_i + \beta_2 College_i + \beta_3 KWW_i + \beta_4 exper_i + U_i$$
+
+```{r}
+m1 <- lm(lwage ~ educ + KWW + exper, data = df)
+m2 <- lm(lwage ~ HS + College + KWW + exper, data = df)
+models <- list(m1,m2)
+stargazer(models,type='text',digits=3,
+          title='OLS Estimates for Equations (1) and (2) with experience')
+```
+
+**how does this change model interpretation of effect of edu on wage**
+
+### h)
+
+
+
+### i)
+
+```{r, warning=FALSE,message=FALSE}
+q1i <- df %>%
+  mutate(educat = ifelse(educ >= 12,
+                         ifelse(educ >= 16,'College','HS'),
+                         'No Degree')) %>%
+  group_by(educat,age) %>%
+  summarise(mean_lwage = mean(lwage))
+
+ggplot(data = q1i, mapping = aes(x = age, y = mean_lwage, color = educat)) + 
+  geom_point() + 
+  geom_line() + 
+  ggtitle('ADD TITLE') + 
+  labs(x = 'Age (years)', y = 'log wage') + 
+  theme_light()
+  
+```
+
+**COMMENT**
+
+
+### j)
+
+
