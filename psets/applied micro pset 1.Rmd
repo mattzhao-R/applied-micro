@@ -134,6 +134,10 @@ stargazer(models,type='text',digits=3,
 
 ### h)
 
+$$ lwage_i = \beta_0 + \beta_1 educ_i + \beta_3 KWW_i + \beta_4 exper_i + \beta_5 exper_i * educ + U_i (1) $$
+
+
+$$ lwage_i = \beta_0 + \beta_1 HS_i + \beta_2 College_i + \beta_3 KWW_i + \beta_4 exper_i + \beta_5 exper_i * HS + \beta_6 exper_i * College + U_i$$
 
 
 ### i)
@@ -159,5 +163,86 @@ ggplot(data = q1i, mapping = aes(x = age, y = mean_lwage, color = educat)) +
 
 
 ### j)
+
+#### (i)
+
+$$ lwage_i = \beta_0 + \beta_1 educ_i + \beta_3 KWW_i + \beta_4 exper_i + \beta_5 black_i + U_i (1) $$
+
+$$ lwage_i = \beta_0 + \beta_1 HS_i + \beta_2 College_i + \beta_3 KWW_i + \beta_4 exper_i + \beta_5 black_i + U_i$$
+
+#### (ii)
+
+```{r}
+m1 <- lm(lwage ~ educ + HS + College + KWW + black, data = df)
+m2 <- lm(lwage ~ educ*HS + educ*College + KWW + black, data = df)
+
+models <- list(m1,m2)
+stargazer(models,type='text',digits=3,
+          title='OLS Estimates including race')
+```
+
+For (1), the interpretation of $\beta_1$ is that holding KWW (a proxy for intelligence) fixed, we expect an average approximate increase of 2.1% in wages for each additional year of education. We interpret $\beta_3$ as an expected approximate increase of 1.9% in wages for each additional increase in KWW score holding years of education fixed. 
+
+For (2), the interpretation of $\beta_1$ is that holding KWW (a proxy for intelligence) fixed, we expect an average approximate increase of 12.5% in wages for an individual with only a high school degree. We interpret $\beta_2$ as an expected approximate increase of 19.5% in wages for an individual with a college degree compared to those with no degree holding KWW score fixed. We interpret $\beta_3$ as an expected approximate increase of 1.9% in wages for each additional increase in KWW score holding education level/degree status fixed.  
+
+#### (iii)
+
+**what hypothese are we testing?**
+
+### k)
+
+#### (i)
+
+$$ lwage_i = \beta_0 + \beta_1 educ_i + \beta_3 KWW_i + \beta_4 exper_i + \beta_5 black_i + \beta_6 black_i * educ_i + U_i (1) $$
+$$ lwage_i = \beta_0 + \beta_1 HS_i + \beta_2 College_i + \beta_3 KWW_i + \beta_4 exper_i + \beta_5 black_i  + \beta_6 black_i * educ_i + U_i$$
+
+#### (ii)
+
+```{r}
+m1 <- lm(lwage ~ educ + HS + College + KWW + black + black * educ, data = df)
+m2 <- lm(lwage ~ educ*HS + educ*College + KWW + black + black * educ, data = df)
+
+models <- list(m1,m2)
+stargazer(models,type='text',digits=3,
+          title='OLS Estimates including race interaction')
+```
+
+#### (iii)
+
+**what hypothese are we testing?**
+
+
+### l)
+
+
+
+
+### m)
+
+```{r}
+m1 <- lm(lwage ~ educ + HS + College + KWW + black + black * educ + south, data = df)
+m2 <- lm(lwage ~ educ*HS + educ*College + KWW + black + black * educ + smsa, data = df)
+m <- lm(lwage ~ educ*HS + educ*College + KWW + black + black * educ + smsa, data = df)
+
+
+models <- list(m1,m2,m3)
+stargazer(models,type='text',digits=3,
+          title='Sensitivity Test to Location')
+```
+
+
+## Question 2
+
+### a)
+
+While MLR.1-MLR.4 hold for the population model (3), MLR.4 may not hold for (4). This is because while $E[U|X_1]=0$ holds in (3) by assumption, we cannot be certain this is the case in (4) i.e. that MLR.4 holds where $E[\hat{U}|X_1]=0$ because $\hat{U}$ contains $U$ and $X_2$, and $X_1$ and $X_2$ are likely to be related to each other. As a result, leaving out $X_2$ means that MLR.4 is likely violated and our estimate of $\beta_1$ is biased since (4) suffers from OVB. Thus, we cannot say that the estimate of $\beta_1$ is causal. **fix last sentence**
+
+### b)
+
+
+### c)
+
+
+## Question 3
 
 
