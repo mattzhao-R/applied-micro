@@ -53,7 +53,7 @@ The OLS estimator $\hat{\beta}_1$ from (1) is biased because it is unlikely that
 
 ### c)
 
-Ideally we would want to measure intelligence (KWW) prior to having any schooling. Otherwise, if we measured intelligence after individuals received schooling, it is likely that MLR.4 will be violated since education could have influenced intelligence. 
+Ideally we would want to measure intelligence (KWW) prior to having any schooling. Otherwise, if we measured intelligence after individuals received schooling, it is likely that intelligence would be affected by education. In the data, the exam is administered in 1966, so intelligence was measured earlier in life for some individuals and later in life for others.   
 
 ### d) 
 
@@ -66,7 +66,7 @@ stargazer(models,type='text',digits=3,
           title='OLS Estimates for Additional Specifications')
 ```
 
-I prefer model specification (2). This is because when adding education to this model, we see that the coefficient is insignificantly different from zero. This indicates that the degree premia account for the majority of gains to wages from education holding intelligence fixed. **get rid of m2?**
+I prefer model specification (2). This is because when adding education to this model, we see that the coefficient is insignificantly different from zero. This indicates that the degree premia account for the majority of gains to wages from education holding intelligence fixed. 
 
 ### e)
 
@@ -90,7 +90,7 @@ stargazer(models,type='text',digits=3,
           title='OLS Estimates for (2) at fixed ages')
 ```
 
-These estimates are generally larger than the estimates from part (a) for ages 28 and 32 and smaller for age 24. They differ because we're conditioning on age **something about OVB and U**.
+These estimates are generally larger than the estimates from part (a) for ages 28 and 32 and smaller for age 24. This makes sense since generally experience and education increase with age, thus likely increasing log wages. The estimates differ from those in part (a) because the specification did not include age or any proxy for age, meaning that our estimates were likely biased. Additionally, the increasing $\hat{\beta}_1$ indicates that there are potentially increasing returns to education with respect to age so not having interaction terms also can explain why the estimates are different. Lastly, since many of the observations are in the lowest age group, with lower age being associated with a smaller estimated $\beta_1$, this distribution in age in the sample would also bias the coefficient from part (a) downwards. 
 
 ### f)
 
@@ -114,7 +114,7 @@ stargazer(models,type='text',digits=3,
           title='OLS Estimates for (2) at fixed experience')
 ```
 
-**EXPLAIN HOW AND WHY ESTIMATES DIFFER FROM (a)**
+Similarly to (e), the estimates increase with experience. This is likely because greater experience increases returns to education, or more specifically, at higher levels of experience, education makes a greater impact on the rate of change in log wage. The estimates differ from those in part (a) since the model did not account for experience and potentially heterogeneous returns to education. 
 
 ### g)
 
@@ -130,15 +130,30 @@ stargazer(models,type='text',digits=3,
           title='OLS Estimates for Equations (1) and (2) with experience')
 ```
 
-**how does this change model interpretation of effect of edu on wage**
+We are testing the null that $\beta_4=0$ against the alternative that it is not equal to zero. 
+
+After adding *exper* to the models we see that the coefficients become larger (more positive). If these specifications allow us to interpret $\hat{\beta}_1$ causally, we can say that adding *exper* would make us conclude that the causal effect of education on wages is larger than we previously thought and that our previous estimates of (1) and (2) suffered from omitted variable bias causing them to be too small. 
+
+
 
 ### h)
 
 $$ lwage_i = \beta_0 + \beta_1 educ_i + \beta_3 KWW_i + \beta_4 exper_i + \beta_5 exper_i * educ + U_i (1) $$
 
 
-$$ lwage_i = \beta_0 + \beta_1 HS_i + \beta_2 College_i + \beta_3 KWW_i + \beta_4 exper_i + \beta_5 exper_i * HS + \beta_6 exper_i * College + U_i$$
+$$ lwage_i = \beta_0 + \beta_1 HS_i + \beta_2 College_i + \beta_3 KWW_i + \beta_4 exper_i + \beta_6 exper_i * HS + \beta_7 exper_i * College + U_i (2)$$
 
+```{r}
+m1 <- lm(lwage ~ educ + KWW + exper + exper*educ, data = df)
+m2 <- lm(lwage ~ HS + College + KWW + exper + exper*HS + exper*College, data = df)
+models <- list(m1,m2)
+stargazer(models,type='text',digits=3,
+          title='Equations (1) and (2) with experience interactions')
+```
+
+Here we are testing the null that $\beta_5=0$ for (1) and $\beta_6=0$ and $\beta_7=0$ for (2) against the null that they are not zero. 
+
+We do see evidence that the wage return to education differs by potential experience with the coefficients rejecting the null at the 1% significance level for both models. 
 
 ### i)
 
@@ -147,101 +162,149 @@ q1i <- df %>%
   mutate(educat = ifelse(educ >= 12,
                          ifelse(educ >= 16,'College','HS'),
                          'No Degree')) %>%
-  group_by(educat,age) %>%
-  summarise(mean_lwage = mean(lwage))
+  group_by(educat,exper) %>%
+  summarise(mean_lwage = mean(lwage),
+            mean_kww = mean(KWW),
+            mean_exper = mean(exper)) %>%
+  mutate(modela = 
+           0.125*ifelse(educat == 'HS',1,0) + 
+           0.195*ifelse(educat == 'College',1,0) + 
+           0.019*mean_kww + 
+           5.514,
+         modelg = 
+           0.237*ifelse(educat == 'HS',1,0) + 
+           0.399*ifelse(educat == 'College',1,0) + 
+           0.015*mean_kww + 
+           0.022*mean_exper + 
+           5.309,
+         modelh = 
+           0.037*ifelse(educat == 'HS',1,0) + 
+           0.043*ifelse(educat == 'College',1,0) + 
+           0.015*mean_kww + 
+           0.005*mean_exper + 
+           0.015*ifelse(educat == 'HS',1,0)*mean_exper + 
+           0.042*ifelse(educat == 'College',1,0)*mean_exper + 
+           5.549) %>%
+  pivot_longer(cols = c(mean_lwage,modela,modelg,modelh),
+               names_to = 'yvals',
+               values_to='values',
+               values_drop_na = T) 
 
-ggplot(data = q1i, mapping = aes(x = age, y = mean_lwage, color = educat)) + 
+ggplot(data = q1i, mapping = aes(x = mean_exper, y = values, color = yvals)) +
   geom_point() + 
-  geom_line() + 
-  ggtitle('ADD TITLE') + 
-  labs(x = 'Age (years)', y = 'log wage') + 
-  theme_light()
-  
+  geom_line() +
+  facet_wrap(~educat) +
+  theme_light() +
+  ggtitle("Model Fit across Levels of Education") +
+  labs(x = 'Experience', y = 'Log Wage') + 
+  theme(legend.title= element_blank())
 ```
 
-**COMMENT**
-
+We see that as the model becomes more complex, we are better able to capture variation in wage-experience profiles across the different levels of education. As a result, it appears that the most complex model with experience interactions, model h, best fits the data across the three levels.
 
 ### j)
 
 #### (i)
 
-$$ lwage_i = \beta_0 + \beta_1 educ_i + \beta_3 KWW_i + \beta_4 exper_i + \beta_5 black_i + U_i (1) $$
+$$ lwage_i = \beta_0 + \beta_1 educ_i + \beta_3 KWW_i + \beta_4 black_i + U_i (1) $$
 
-$$ lwage_i = \beta_0 + \beta_1 HS_i + \beta_2 College_i + \beta_3 KWW_i + \beta_4 exper_i + \beta_5 black_i + U_i$$
+$$ lwage_i = \beta_0 + \beta_1 HS_i + \beta_2 College_i + \beta_3 KWW_i + \beta_4 black_i + U_i \text{  (2)}$$
 
 #### (ii)
 
 ```{r}
-m1 <- lm(lwage ~ educ + HS + College + KWW + black, data = df)
-m2 <- lm(lwage ~ educ*HS + educ*College + KWW + black, data = df)
+m1 <- lm(lwage ~ educ + KWW + black, data = df)
+m2 <- lm(lwage ~ HS + College + KWW + black, data = df)
 
 models <- list(m1,m2)
 stargazer(models,type='text',digits=3,
-          title='OLS Estimates including race')
+          title='Population Models (1) and (2) with race')
 ```
 
-For (1), the interpretation of $\beta_1$ is that holding KWW (a proxy for intelligence) fixed, we expect an average approximate increase of 2.1% in wages for each additional year of education. We interpret $\beta_3$ as an expected approximate increase of 1.9% in wages for each additional increase in KWW score holding years of education fixed. 
+For (1), the interpretation of $\beta_1$ is that holding KWW (a proxy for intelligence) fixed, we expect an average approximate increase of 2% in wages for each additional year of education. We interpret $\beta_3$ as an expected approximate increase of 1.6% in wages for each additional increase in KWW score holding years of education fixed. We interpret $\beta_4$ as an expected approximate decrease of 13.3% in wages for an individual who is black compared with one who is not holding years of education and intelligence fixed.
 
-For (2), the interpretation of $\beta_1$ is that holding KWW (a proxy for intelligence) fixed, we expect an average approximate increase of 12.5% in wages for an individual with only a high school degree. We interpret $\beta_2$ as an expected approximate increase of 19.5% in wages for an individual with a college degree compared to those with no degree holding KWW score fixed. We interpret $\beta_3$ as an expected approximate increase of 1.9% in wages for each additional increase in KWW score holding education level/degree status fixed.  
+For (2), the interpretation of $\beta_1$ is that holding KWW (a proxy for intelligence) fixed, we expect an average approximate increase of 11.3% in wages for an individual with only a high school degree. We interpret $\beta_2$ as an expected approximate increase of 18% in wages for an individual with a college degree compared to those with no degree holding KWW score fixed. We interpret $\beta_3$ as an expected approximate increase of 1.6% in wages for each additional increase in KWW score holding education level/degree status fixed. We interpret $\beta_4$ as an expected approximate decrease of 12.9% in wages for an individual who is black compared with one who is not holding education level/degree status and intelligence fixed.
 
 #### (iii)
 
-**what hypothese are we testing?**
+Here we are testing the null hypothesis stating that the coefficient for *black* is 0 ($\beta_4=0$) against the alternative that it is nonzero.
+
+Given that the coefficients for both (1) and (2) are large and significantly different from zero, we can conclude that wages do differ by race. However, we cannot say that this is necessarily a causal relationship i.e. that race has a causal impact on wages since it could be the case that other determinants of wage that are not observed here e.g. family wealth are related to race, resulting in selection.
 
 ### k)
 
 #### (i)
 
-$$ lwage_i = \beta_0 + \beta_1 educ_i + \beta_3 KWW_i + \beta_4 exper_i + \beta_5 black_i + \beta_6 black_i * educ_i + U_i (1) $$
-$$ lwage_i = \beta_0 + \beta_1 HS_i + \beta_2 College_i + \beta_3 KWW_i + \beta_4 exper_i + \beta_5 black_i  + \beta_6 black_i * educ_i + U_i$$
+$$ lwage_i = \beta_0 + \beta_1 educ_i + \beta_3 KWW_i + \beta_4 black_i + \beta_5 black_i * educ_i + U_i (1) $$
+$$ lwage_i = \beta_0 + \beta_1 HS_i + \beta_2 College_i + \beta_3 KWW_i + \beta_4 black_i + \beta_5 black_i * HS + \beta_6 black_i * College + U_i (2)$$
 
 #### (ii)
 
 ```{r}
-m1 <- lm(lwage ~ educ + HS + College + KWW + black + black * educ, data = df)
-m2 <- lm(lwage ~ educ*HS + educ*College + KWW + black + black * educ, data = df)
+m1 <- lm(lwage ~ educ + KWW + black + black * educ, data = df)
+m2 <- lm(lwage ~ HS + College + KWW + black + black * HS + black * College, data = df)
 
 models <- list(m1,m2)
 stargazer(models,type='text',digits=3,
           title='OLS Estimates including race interaction')
 ```
 
+For (1), the interpretation of $\beta_1$ is that holding KWW (a proxy for intelligence) and race fixed, we expect an average approximate increase of 1.6% in wages for each additional year of education. We interpret $\beta_3$ as an expected approximate increase of 1.6% in wages for each additional increase in KWW score holding years of education and race fixed. We interpret $\beta_4$ as the expected approximate decrease of 36.6% in wages for an individual who is black compared with one who is not holding years of education and intelligence fixed. We interpret $\beta_5$ as an expected approximate additional increase of 1.9% in wages for each additional year of education for an individual who is black compared with one who is not holding years of education and intelligence fixed.
+
+For (2), the interpretation of $\beta_1$ is that holding KWW (a proxy for intelligence) fixed, we expect an average approximate increase of 9.6% in wages for an individual with only a high school degree. We interpret $\beta_2$ as an expected approximate increase of 14.8% in wages for an individual with a college degree compared to those with no degree holding KWW score fixed. We interpret $\beta_3$ as an expected approximate increase of 1.6% in wages for each additional increase in KWW score holding education level/degree status fixed. We interpret $\beta_4$ as an expected approximate decrease of 17.3% in wages for an individual who is black compared with one who is not holding education level/degree status and intelligence fixed. We interpret $\beta_5$ as an expected approximate additional increase of 3.3% in wages for an individual with only a high school degree if that individual is black compared with one who is not holding years of education and intelligence fixed. We interpret $\beta_6$ as an expected approximate additional increase of 16.2% in wages for an individual with a college degree if that individual is black compared with one who is not holding years of education and intelligence fixed.
+
+
 #### (iii)
 
-**what hypothese are we testing?**
+We are testing the null hypothesis that $\beta_6=0$ for (1) and $\beta_6=0$ and $\beta_7=0$ for (2) against the alternative that the coefficients are not zero. 
+
+We see evidence that wage return to education differs by race in (1) where the interaction term between race and education is significantly different from zero. We may expect this since black individuals are typically disadvantaged in the workforce, with education playing a role in leveling the playing field and evening out wage disparities. 
+
+There is also some evidence in specification (2) that wage return to education differs by race since the estimate of $\beta_7$ is large and significantly different from zero while the estimate of $\beta_6$ is small and insignificantly different from zero. We may expect this difference because obtaining a college degree opens many opportunities in the form of DEI and various other workplace initiatives as well as careers that would potentially allow individuals who are black to break out of a poverty cycle if we believe individual level poverty traps exist. 
 
 
 ### l)
 
-
+In this setting I would prefer the specification from part (k) since it captures significant effects via interaction terms that model j fails to account for, specifically the differential impact of college on black individuals in this sample. Additionally, there are significant differences in the estimated coefficients across these specifications, indicating potential misspecification and OVB, especially in model a.
 
 
 ### m)
 
 ```{r}
-m1 <- lm(lwage ~ educ + HS + College + KWW + black + black * educ + south, data = df)
-m2 <- lm(lwage ~ educ*HS + educ*College + KWW + black + black * educ + smsa, data = df)
-m <- lm(lwage ~ educ*HS + educ*College + KWW + black + black * educ + smsa, data = df)
+m1 <- lm(lwage ~ educ + KWW + black + black * educ + south, data = df)
+m2 <- lm(lwage ~ HS + College + KWW + black + black * HS + black * College + south, data = df)
 
 
-models <- list(m1,m2,m3)
+models <- list(m1,m2)
 stargazer(models,type='text',digits=3,
-          title='Sensitivity Test to Location')
+          title='Sensitivity Test to Location - south')
 ```
+
+```{r}
+m1 <- lm(lwage ~ educ + KWW + black + black * educ + smsa, data = df)
+m2 <- lm(lwage ~ HS + College + KWW + black + black * HS + black * College + smsa, data = df)
+
+models <- list(m1,m2)
+stargazer(models,type='text',digits=3,
+          title='Sensitivity Test to Location - smsa')
+```
+
+It appears that our conclusions in part l are robust to specifications including location controls e.g. south and SMSA, with the coefficients seeing little change when including these controls. 
 
 
 ## Question 2
 
 ### a)
 
-While MLR.1-MLR.4 hold for the population model (3), MLR.4 may not hold for (4). This is because while $E[U|X_1]=0$ holds in (3) by assumption, we cannot be certain this is the case in (4) i.e. that MLR.4 holds where $E[\hat{U}|X_1]=0$ because $\hat{U}$ contains $U$ and $X_2$, and $X_1$ and $X_2$ are likely to be related to each other. As a result, leaving out $X_2$ means that MLR.4 is likely violated and our estimate of $\beta_1$ is biased since (4) suffers from OVB. Thus, we cannot say that the estimate of $\beta_1$ is causal. **fix last sentence**
+While MLR.1-MLR.4 hold for the population model (3), MLR.4 may not hold for (4). This is because while $E[U|X_1]=0$ holds in (3) by assumption, we cannot be certain this is the case in (4) i.e. that MLR.4 holds where $E[\hat{U}|X_1]=0$ because $\hat{U}$ contains $U$ and $X_2$, and $X_1$ and $X_2$ are likely to be related to each other. As a result, leaving out $X_2$ means that MLR.4 is likely violated and our estimate of $\beta_1$ is biased since (4) suffers from OVB. Thus, we cannot say that $\hat{\beta}_1$ is an unbiased and consistent estimate of the causal effect of $X_1$ on $Y$.
 
 ### b)
 
+As mentioned in part (a), MLR.4 may not plausible in (4) since $X_2$ is omitted from the model. In order for $\hat{\beta}_1$ to be an unbiased and consistent estimate of $\beta_1$, we would need to assume that $X_1$ and $X_2$ are uncorrelated. This is most likely not credible since people typically choose partners who come from similar socioeconomic backgrounds and with similar income. 
 
 ### c)
 
+We would need data on $X_2$, that is, we need data about the incomes of these head of households' partners. Specifically, we would want to obtain data that shows that their incomes are not correlated or simply change the specification to include $X_2$ and obtain the new OLS estimates with the new data to better reflect the population model. 
 
 ## Question 3
 
