@@ -308,4 +308,4 @@ We would need data on $X_2$, that is, we need data about the incomes of these he
 
 ## Question 3
 
-
+A paper that I am interested in replicating is this paper titled "Employment Effects of Financial Constraints during the Great Recession" by Michael Siemer which explores how financial constraints on firms after the Great Recession led to higher unemployment in the recovery period. This paper interests me since it illustrates a macrofinance explanation for the unusually slow labor market recovery post-2008 using firm-level data. The author employs a differences-in-differences identification strategy which I anticipate will be covered later in the course and replication data can be found [**here**](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/CZ7URJ) via Harvard Dataverse. This paper was originally published in the Review of Economics and Statistics in 2019.
