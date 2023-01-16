@@ -1,0 +1,26 @@
+---
+title: "Applied Micro PSET 2"
+author: "Matthew Zhao"
+date: "2023-01-16"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(haven)
+library(stargazer)
+library(xtable)
+options(scipen=999)
+```
+
+## Question 1
+
+### a)
+
+```{r}
+df <- read_stata('data/gpa2.DTA')
+```
