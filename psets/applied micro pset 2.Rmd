@@ -81,8 +81,8 @@ Since the partial effect of female increased after controlling for sat score, th
 In comparing models (1) and (2), we are looking at potential OVB of SLR vs MLR, where we can decompose the OLS estimate of $\beta_1$ from the SLR (from here on referred to as $\tilde{\beta}_1$) as $\tilde{\beta}_1 = \hat{\beta}_1 + \hat{\beta}_2 \tilde{\delta}_1$ where $\hat{\beta}_1$ and $\hat{\beta}_2$ are the OLS estimates of the parameters of (2) and $ \tilde{\delta}_1$ is from the OLS estimate of $sat = \delta_0 + \delta_1 female + U$. Specifically, we can derive the implied OVB of leaving out sat using the first equation from earlier, where $E[\tilde{\beta}_1] - \hat{\beta}_1 = \hat{\beta}_2 \tilde{\delta}_1$. Using the values from part (b) and below, we find that the implied OVB of leaving out sat in the regression in (a) is around $0.002 * -43.07331 = -0.086$, which is roughly the difference between $\hat{\beta}_1$ and $\tilde{\beta}_1$ ($\tilde{\beta}_1 - \hat{\beta}_1 = 0.142 - 0.231 = -0.089)$. 
 
 ```{r}
-model_c <- lm(sat ~ female, data = df)
-model_c$coefficients
+temp <- lm(sat ~ female, data = df)
+temp$coefficients
 ```
 
 ### d)
@@ -113,21 +113,37 @@ stargazer(white_reg,type='text',digits=3,
           title='Table 4 - White Test for Heteroskedasticity')
 ```
 
-We do find evidence for heteroskedasticity since we see that the BP test rejects the null of homoskedasticity at the 1% significance level while the F-stat for the White Test is similarly significant at the same level. 
+We do find some evidence for heteroskedasticity since we see that the BP test rejects the null of homoskedasticity at the 1% significance level. However the F-stat for the White Test is large and significant, meaning that the coefficients are likely to be non-zero and the test fails to reject. **ask about this**
 
 
 ### f)
 
-```{r, warning=FALSE}
+```{r, warning=FALSE, message=FALSE}
 library(lmtest)
 library(sandwich)
 
-model_c_robust <- coeftest(model_c, vcov = vcovHC(model_c, type = 'HC0'))
-
-stargazer(model_c_robust,type='text',digits=3,
-          title='Table 5 - Robust SEs for Model (c)')
+summary(model_c)
 ```
 
+```{r}
+coeftest(model_c, vcov = vcovHC(model_c, type = 'HC1'))
+```
 
+The standard errors are lower while the t-statistics are larger. We expect this since we saw earlier that the variance in residuals is lower for females (female = 1) than for males (female = 0). This means that the residuals are negatively correlated with $\sigma_i^2$. As a result, since the formula for robust standard errors is $\hat{\sigma}(\hat{\beta_j}) = \displaystyle \sqrt{\frac{\sum_{i=1}^n \hat{\epsilon}_{ij}^2 \hat{U}^2_i}{SSR_j^2}}$ and for non robust is $\hat{\sigma}(\hat{\beta_j}) = \displaystyle \frac{\hat{\sigma}_U}{\sqrt{SST_j(1-R^2_j)}}$, we see that the robust standard errors are smaller than nonrobust when the variance and residuals are negatively correlated as we see here. 
+
+### g)
+
+**What does investigate the functional form relationship mean?**
+
+```{r, warning=FALSE}
+m1 <- lm(colgpa ~ female + sat, data = df)
+m2 <- lm(colgpa ~ female + log(sat), data = df)
+m3 <- lm(log(colgpa+1) ~ female + sat, data = df)
+m4 <- lm(log(colgpa+1) ~ female + log(sat), data = df)
+models <- list(m1,m2,m3,m4)
+
+stargazer(models,type='text',digits=3,
+          title='Table 5 - Different Functional Forms Variants of (2)')
+```
 
 
