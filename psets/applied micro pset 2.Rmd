@@ -59,7 +59,7 @@ ggplot(data = df, aes(x = colgpa)) +
   labs(x = 'College GPA', y = 'Count')
 ```
 
-The distribution of residuals conditional on female is a reflection of the distribution of colgpa conditional on female because in this regression the only explanatory variable we are using is female. As a result, the spread of college gpa conditional on female directly determines the spread of residuals conditional on female e.g. individuals who are not female tend to have a wider range of gpas means that the residuals for individuals who are not female will be more spread out since they will be further from the fitted values from the regression and hence have a wider range of residuals. **check**
+The distribution of residuals conditional on female is a reflection of the distribution of colgpa conditional on female because in this regression the only explanatory variable we are using is female. As a result, the spread of college gpa conditional on female directly determines the spread of residuals conditional on female e.g. individuals who are not female tend to have a wider range of gpas means that the residuals for individuals who are not female will be more spread out since they will be further from the fitted values from the regression and hence have a wider range of residuals. 
 
 ### c)
 
@@ -109,8 +109,9 @@ pf(F_stat,k,n-k-1,lower.tail = F)
 ```{r, warning=FALSE}
 white_reg <- lm(U_hat^2 ~ df$colgpa + I(df$colgpa)^2)
 
-stargazer(white_reg,type='text',digits=3,
-          title='Table 4 - White Test for Heteroskedasticity')
+# linearHypothesis(white_reg, c("colgpa=0", "expenditure=0"))
+# stargazer(white_reg,type='text',digits=3,
+#           title='Table 4 - White Test for Heteroskedasticity')
 ```
 
 We do find some evidence for heteroskedasticity since we see that the BP test rejects the null of homoskedasticity at the 1% significance level. However the F-stat for the White Test is large and significant, meaning that the coefficients are likely to be non-zero and the test fails to reject. **ask about this**
@@ -133,17 +134,56 @@ The standard errors are lower while the t-statistics are larger. We expect this 
 
 ### g)
 
-**What does investigate the functional form relationship mean?**
-
 ```{r, warning=FALSE}
 m1 <- lm(colgpa ~ female + sat, data = df)
-m2 <- lm(colgpa ~ female + log(sat), data = df)
-m3 <- lm(log(colgpa+1) ~ female + sat, data = df)
-m4 <- lm(log(colgpa+1) ~ female + log(sat), data = df)
-models <- list(m1,m2,m3,m4)
+m2 <- lm(colgpa ~ female + sat + I(sat^2), data = df)
+m3 <- lm(colgpa ~ female + sat + I(sat^2) + I(sat^3), data = df)
+models <- list(m1,m2,m3)
 
 stargazer(models,type='text',digits=3,
           title='Table 5 - Different Functional Forms Variants of (2)')
 ```
+
+We find that adding polynomial terms for sat works up to the second power, with the coefficient being statistically significant at the 1% level. Subsequent terms add little to the regression and are not significant.
+
+Non-random selection of students into college may explain this weakly negative relationship between college gpa and sat score since generally, students go to the best school they are able to. As a result, they typically will be taking classes with students who are at similar levels of intelligence/work ethic. With classes being curved, there is a limit to how well you can do based on how well other students in your class do. This has the largest effect on students at the higher end of the sat distribution, since the sat is an absolute measure of high school performance, while college gpa is, to an extent, a relative measure of performance in college. Hence, the quadratic form best fits the functional form relationship between college gpa and sat.  
+
+### h)
+
+*corr w sat, reduce coef but not variance, multicollinear/unique variation in sat leads to coef but incl hsperc reduces this*
+```{r, warning=FALSE}
+with_hsperc <- lm(colgpa ~ female + sat + hsperc, data = df)
+hsperc_sat <- lm(sat ~ female + hsperc, data = df)
+stargazer(list(model_c,with_hsperc, hsperc_sat),type='text',digits=4,
+          title='Table 6 - Comparison of Model with hsperc')
+```
+
+hsperc represents the class percentile a student was in in high school starting from the top. Omitting hsperc causes $\hat{\beta}_2$ to be larger because a student's class percentile is most likely correlated with sat score. As a result of this relationship, including hsperc would reduce the unique variation in sat and cause this coefficient to fall. Additionally, this has minimal impact on the variance of $\hat{\beta}_2$ since 
+
+### i)
+
+
+
+### j)
+
+
+
+### k)
+
+
+
+## Problem 2
+
+### a)
+
+
+### b)
+
+
+## Problem 3
+
+
+
+
 
 
