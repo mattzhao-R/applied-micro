@@ -19,8 +19,115 @@ options(scipen=999)
 
 ## Question 1
 
-### a)
-
 ```{r}
 df <- read_stata('data/gpa2.DTA')
 ```
+
+### a)
+
+\begin{equation}
+\tag{1}
+colgpa_i = \beta_0 + \beta_1 female_i + U_i
+\end{equation}
+
+```{r, warning=FALSE}
+model_a <- lm(colgpa ~ female, data = df)
+stargazer(model_a,type='text',digits=3,
+          title='Table 1 - OLS Estimates of (1)')
+```
+
+From Table 1, we see that the OLS estimate for $\beta_1$ in (1) is $\hat{\beta}_1 = 0.142$ and is significant at the 1% significance level. We interpret this coefficient as an individual who is female has a college gpa that is on average approximately 0.142 higher than someone who is not. We can interpret the OLS estimate of $\beta_0$ which is $\hat{\beta}_0 = 2.589$ as the approximate average college gpa of someone who is not female. 
+
+### b)
+
+```{r, warning=FALSE}
+temp <- df %>%
+  mutate(res_b = lm(colgpa ~ female, data = df)$residuals)
+
+ggplot(data = temp, aes(x = res_b)) +
+  geom_histogram(binwidth = 0.2) +
+  facet_wrap(~female,nrow=2) + 
+  labs(x = 'Residuals', y = 'Count')
+```
+
+Homoskedasticity is defined as $Var(U_i|X_i) = \sigma^2$ for all $i=1,..,n$. From the distributions of residuals above, we see that the spread in residuals is slightly smaller for observations with female = 1 i.e. individuals who are female than for those who are not. This could potentially be evidence of heteroskedasticity. 
+
+```{r}
+ggplot(data = df, aes(x = colgpa)) +
+  geom_histogram(binwidth = 0.2) +
+  facet_wrap(~female,nrow=2) + 
+  labs(x = 'College GPA', y = 'Count')
+```
+
+The distribution of residuals conditional on female is a reflection of the distribution of colgpa conditional on female because in this regression the only explanatory variable we are using is female. As a result, the spread of college gpa conditional on female directly determines the spread of residuals conditional on female e.g. individuals who are not female tend to have a wider range of gpas means that the residuals for individuals who are not female will be more spread out since they will be further from the fitted values from the regression and hence have a wider range of residuals. **check**
+
+### c)
+
+\begin{equation}
+\tag{2}
+colgpa_i = \beta_0 + \beta_1 female_i + \beta_2 sat_i + V_i
+\end{equation}
+
+```{r, warning=FALSE}
+model_c <- lm(colgpa ~ female + sat, data = df)
+stargazer(model_c,type='text',digits=3,
+          title='Table 2 - OLS Estimates of (2)')
+```
+
+From Table 2, we see that the OLS estimate for $\beta_1$ in (2) is $\hat{\beta}_1 = 0.231$ and that $\beta_2$ in (2) is $\hat{\beta}_2 = 0.002$, with both significant at the 1% significance level. We interpret the first coefficient as an individual who is female has a college gpa that is on average approximately 0.231 higher than someone who is not with the same sat score. We interpret the second coefficient as an individual would have a college gpa that is approximately 0.002 higher on average if they had an sat score than is 1 point higher and are the same gender. The OLS estimate of $\beta_0$ which is $\hat{\beta}_0 = 2.589$ represents the approximate average college gpa of someone who is not female and has an sat score of 0. However, since the sample does not contain anyone with an sat score of 0, this is an extrapolation and hence may not be an accurate interpretation. 
+
+Since the partial effect of female increased after controlling for sat score, the change suggests that female is negatively correlated with sat score. 
+
+In comparing models (1) and (2), we are looking at potential OVB of SLR vs MLR, where we can decompose the OLS estimate of $\beta_1$ from the SLR (from here on referred to as $\tilde{\beta}_1$) as $\tilde{\beta}_1 = \hat{\beta}_1 + \hat{\beta}_2 \tilde{\delta}_1$ where $\hat{\beta}_1$ and $\hat{\beta}_2$ are the OLS estimates of the parameters of (2) and $ \tilde{\delta}_1$ is from the OLS estimate of $sat = \delta_0 + \delta_1 female + U$. Specifically, we can derive the implied OVB of leaving out sat using the first equation from earlier, where $E[\tilde{\beta}_1] - \hat{\beta}_1 = \hat{\beta}_2 \tilde{\delta}_1$. Using the values from part (b) and below, we find that the implied OVB of leaving out sat in the regression in (a) is around $0.002 * -43.07331 = -0.086$, which is roughly the difference between $\hat{\beta}_1$ and $\tilde{\beta}_1$ ($\tilde{\beta}_1 - \hat{\beta}_1 = 0.142 - 0.231 = -0.089)$. 
+
+```{r}
+model_c <- lm(sat ~ female, data = df)
+model_c$coefficients
+```
+
+### d)
+
+While the OLS estimator $\hat{\beta}$ of the parameter vector $\beta$ in (2) remains unbiased and consistent, the variance of this estimator $Var(\hat{\beta})$ is now biased.
+
+### e)
+
+**Breuch-Pagan**
+
+```{r, warning=FALSE}
+U_hat <- model_c$residuals
+U_reg <- lm(U_hat^2 ~ df$female + df$sat)
+U_rsq <- summary(U_reg)$r.squared
+n <- nrow(df)
+k <- 2
+
+F_stat <- (U_rsq/k) / ((1-U_rsq)/(n-k-1))
+pf(F_stat,k,n-k-1,lower.tail = F)
+```
+
+**White Test**
+
+```{r, warning=FALSE}
+white_reg <- lm(U_hat^2 ~ df$colgpa + I(df$colgpa)^2)
+
+stargazer(white_reg,type='text',digits=3,
+          title='Table 4 - White Test for Heteroskedasticity')
+```
+
+We do find evidence for heteroskedasticity since we see that the BP test rejects the null of homoskedasticity at the 1% significance level while the F-stat for the White Test is similarly significant at the same level. 
+
+
+### f)
+
+```{r, warning=FALSE}
+library(lmtest)
+library(sandwich)
+
+model_c_robust <- coeftest(model_c, vcov = vcovHC(model_c, type = 'HC0'))
+
+stargazer(model_c_robust,type='text',digits=3,
+          title='Table 5 - Robust SEs for Model (c)')
+```
+
+
+
+
