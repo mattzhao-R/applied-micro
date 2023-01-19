@@ -1,8 +1,9 @@
 ---
 title: "Applied Micro PSET 2"
-author: "Matthew Zhao"
+author: "Matthew Zhao working with Cedric Elkouh"
 date: "2023-01-16"
-output: pdf_document
+output:
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -78,7 +79,7 @@ From Table 2, we see that the OLS estimate for $\beta_1$ in (2) is $\hat{\beta}_
 
 Since the partial effect of female increased after controlling for sat score, the change suggests that female is negatively correlated with sat score. 
 
-In comparing models (1) and (2), we are looking at potential OVB of SLR vs MLR, where we can decompose the OLS estimate of $\beta_1$ from the SLR (from here on referred to as $\tilde{\beta}_1$) as $\tilde{\beta}_1 = \hat{\beta}_1 + \hat{\beta}_2 \tilde{\delta}_1$ where $\hat{\beta}_1$ and $\hat{\beta}_2$ are the OLS estimates of the parameters of (2) and $ \tilde{\delta}_1$ is from the OLS estimate of $sat = \delta_0 + \delta_1 female + U$. Specifically, we can derive the implied OVB of leaving out sat using the first equation from earlier, where $E[\tilde{\beta}_1] - \hat{\beta}_1 = \hat{\beta}_2 \tilde{\delta}_1$. Using the values from part (b) and below, we find that the implied OVB of leaving out sat in the regression in (a) is around $0.002 * -43.07331 = -0.086$, which is roughly the difference between $\hat{\beta}_1$ and $\tilde{\beta}_1$ ($\tilde{\beta}_1 - \hat{\beta}_1 = 0.142 - 0.231 = -0.089)$. 
+In comparing models (1) and (2), we are looking at potential OVB of SLR vs MLR, where we can decompose the OLS estimate of $\beta_1$ from the SLR (from here on referred to as $\tilde{\beta}_1$) as $\tilde{\beta}_1 = \hat{\beta}_1 + \hat{\beta}_2 \tilde{\delta}_1$ where $\hat{\beta}_1$ and $\hat{\beta}_2$ are the OLS estimates of the parameters of (2) and $\tilde{\delta}_1$ is from the OLS estimate of $sat = \delta_0 + \delta_1 female + U$. Specifically, we can derive the implied OVB of leaving out sat using the first equation from earlier, where $E[\tilde{\beta}_1] - \hat{\beta}_1 = \hat{\beta}_2 \tilde{\delta}_1$. Using the values from part (b) and below, we find that the implied OVB of leaving out sat in the regression in (a) is around $0.002 * -43.07331 = -0.086$, which is roughly the difference between $\hat{\beta}_1$ and $\tilde{\beta}_1$ ($\tilde{\beta}_1 - \hat{\beta}_1 = 0.142 - 0.231 = -0.089$). 
 
 ```{r}
 temp <- lm(sat ~ female, data = df)
@@ -109,12 +110,11 @@ pf(F_stat,k,n-k-1,lower.tail = F)
 ```{r, warning=FALSE}
 white_reg <- lm(U_hat^2 ~ df$colgpa + I(df$colgpa)^2)
 
-# linearHypothesis(white_reg, c("colgpa=0", "expenditure=0"))
-# stargazer(white_reg,type='text',digits=3,
-#           title='Table 4 - White Test for Heteroskedasticity')
+stargazer(white_reg,type='text',digits=3,
+          title='Table 4 - White Test for Heteroskedasticity')
 ```
 
-We do find some evidence for heteroskedasticity since we see that the BP test rejects the null of homoskedasticity at the 1% significance level. However the F-stat for the White Test is large and significant, meaning that the coefficients are likely to be non-zero and the test fails to reject. **ask about this**
+We do find some evidence for heteroskedasticity since we see that the BP test rejects the null of homoskedasticity at the 1% significance level. However the F-stat for the White Test is large and significant, meaning that the coefficients are likely to be non-zero and the test fails to reject. 
 
 
 ### f)
@@ -150,40 +150,83 @@ Non-random selection of students into college may explain this weakly negative r
 
 ### h)
 
-*corr w sat, reduce coef but not variance, multicollinear/unique variation in sat leads to coef but incl hsperc reduces this*
 ```{r, warning=FALSE}
 with_hsperc <- lm(colgpa ~ female + sat + hsperc, data = df)
-hsperc_sat <- lm(sat ~ female + hsperc, data = df)
-stargazer(list(model_c,with_hsperc, hsperc_sat),type='text',digits=4,
+stargazer(list(with_hsperc,model_c),type='text',digits=4,
           title='Table 6 - Comparison of Model with hsperc')
 ```
 
-hsperc represents the class percentile a student was in in high school starting from the top. Omitting hsperc causes $\hat{\beta}_2$ to be larger because a student's class percentile is most likely correlated with sat score. As a result of this relationship, including hsperc would reduce the unique variation in sat and cause this coefficient to fall. Additionally, this has minimal impact on the variance of $\hat{\beta}_2$ since 
+```{r, warning=FALSE}
+sat_nohsperc <- lm(sat ~ female, data = df)
+sat_whsperc <- lm(sat ~ female + hsperc, data = df)
+
+stargazer(list(sat_whsperc,sat_nohsperc),type='text',digits=4,
+          title='Table 7 - sat on explanatory vars')
+```
+
+hsperc represents the class percentile a student was in in high school starting from the top. Omitting hsperc causes $\hat{\beta}_2$ to be larger because a student's class percentile is most likely correlated with sat score. As a result of this relationship, including hsperc would reduce the unique variation in sat and cause this coefficient to fall. Additionally, omitting hsperc should reduce the variance of $\hat{\beta}_2$ since $\hat{\sigma}(\hat{\beta_j}) = \displaystyle \frac{\hat{\sigma}_U}{\sqrt{SST_j(1-R^2_j)}}$. Omitting hsperc would reduce $R^2_j$ since the other explanatory variables account for less of the variation in sat. As a result, because the denominator is larger, the overall variance/se is smaller. 
 
 ### i)
 
-
+The idea randomized experiment would be to take a large group of individuals right before they enter college and clone a female version of them with the same background, experiences, etc or turn them female  so that we can completely isolate the causal effect of gender on college gpa. 
 
 ### j)
 
+Besides the practical difficulties, empirically, it is difficult to implement the ideal randomized experiment we described in (i) because an individual's life is largely shaped by their assigned sex at birth, meaning that it is very unlikely for MLR.4 to hold since there are innumerable unobservables that affect an individual. An example in this case would be that even if we could change some individual's genders, their past experience in their initial gender could have an impact on their college gpa. More concretely, there are numerous papers which show differential education and educational opportunities between men and women starting from a young age. As a result, switching from male to female is simply not comparable to being female your whole life, making it empirically challenging to learn the true effect of being female on college gpa. 
 
+Conceptually, it does not make sense to estimate a causal effect of female. Firstly, this is because, while quantifying the gender gap in educational achievement is of interest, practically it is difficult to define what being female means. Would we define being female as biological in terms of horomones and physical traits, or focus on identity and perceived gender? These questions make it conceptually difficult to understand what a causal effect of female would even mean, hence the question not making sense.
 
 ### k)
 
+I do not find MLR.4 credible in the population model. This is because it is very likely that any number of unobservables could be correlated with female and affect college gpa e.g. high school performance, work ethic, geography, cultural values, number/gender/order of siblings, etc. I would want to collect information on the already mentioned variables in addition to family wealth, parental education, schools attended/attending, etc. 
 
+I believe that including the most important omitted variable in (1) (work ethic) would reduce $\hat{\beta}_1$ since the estimator is initially positive in the OLS estimate of (1) and work ethic is likely to be positively correlated with being female. Additionally, since work ethic is positively correlated with being female, it is likely to increase the variance of $\hat{\beta}_1$ since it reduces the unique variance of female in explaining college gpa. 
 
 ## Problem 2
 
 ### a)
 
+Given $X_2$ is independent of $X_3$ and that $X_1$ is correlated with $X_2$ and $X_3$:
+
+$X_2 = \delta_0^2 + \delta_1^2 X_1 + \epsilon_2 \Rightarrow \epsilon_2 = X_2 - \delta_0^2 - \delta_1^2 X_1$ and $X_3 = \delta_0^3 + \delta_1^3 X_1 + \epsilon_3 \Rightarrow \epsilon_3 = X_3 - \delta_0^3 - \delta_1^3 X_1$. 
+
+$Cov(\epsilon_2,\epsilon_3) = Cov(X_2 - \delta_0^2 - \delta_1^2 X_1, X_3 - \delta_0^3 - \delta_1^3 X_1)$
+$= -\delta_1^3Cov(X_2, X_1) - \delta_1^2Cov(X_1, X_3) + \delta_1^2 \delta_1^3 Var(X_1)$
+
+Since we know that $X_1$ is correlated with $X_2$ and $X_3$ and variance is non-negative, $Cov(\epsilon_2,\epsilon_3) \ne 0$ and so they are correlated. 
+
+From there it is sufficient to show that if $\alpha_2$ in the equation $X_3 = \alpha_0 +\alpha_1 X_1 + \alpha_2 X_2 + U$ is nonzero, the OLS estimate for $\beta_2$ in the equation $Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2$ is biased. Since $\gamma_2 = \alpha_2$ where $\gamma_2$ is from the equation $\epsilon_3 = \gamma_0 + \gamma_2 \epsilon_2 + V$, and we previously showed that $\rho_{\epsilon_2,\epsilon_3} \ne 0$, $\gamma_2=\alpha_2 \ne 0$. Hence, the OLS estimate for $\beta_2$ will be biased. 
 
 ### b)
+
+Since $X_2$ is now independent of $X_1$, it follows from part (a) that $\hat{\beta}_2$ is now unbiased.
+
+For $\hat{\beta}_1$:
+
+From 3.23: $E[\hat{\beta}_1] = \beta_1 + \beta_3 \tilde{\delta}_1 \Rightarrow OVB = E[\hat{\beta}_1] - \beta_1 = \beta_3 \tilde{\delta}_1$
+
+$\tilde{\delta}_1 = \displaystyle \frac{Cov(X_1, X_3)}{Var(X_1)} = \frac{\frac{1}{n} \sum_{i=1}^n (X_{1i} - \bar{X}_1)(X_{3i} - \bar{X}_3)}{\frac{1}{n}\sum_{i=1}^n (X_{1i} - \bar{X}_1)^2}$
+
+$\sum (X_{1i} - \bar{X}_1)(X_{3i} - \bar{X}_3) = \sum X_{1i}X_{3i} - \sum X_{1i}\bar{X}_3 - \sum \bar{X}_1 X_{3i} + \sum \bar{X}_1 \bar{X}_3$
+
+$= \sum X_{1i}X_{3i} - \bar{X}_1 X_{3i} + \sum \bar{X}_1 \bar{X}_3 - X_{1i}\bar{X}_3$
+
+$= \sum (X_{1i} - \bar{X}_1) X_{3i} + n\bar{X}_3\sum \bar{X}_1  - X_{1i}$
+
+Since $\sum \bar{X}_1  - X_{1i} = 0$, the prior expression is equal to $\sum (X_{1i} - \bar{X}_1) X_{3i}$
+
+Therefore, our approximate OVB for $\beta_1$ is $\displaystyle \frac{\sum_{i=1}^n (X_{1i} - \bar{X}_1) X_{3i}}{\sum_{i=1}^n (X_{1i} - \bar{X}_1)^2}$
 
 
 ## Problem 3
 
+To preface my answer to this section, I have decided to change my paper to replicate from my answer in the previous week since I was not able to work with the data for that paper. As a result, I have now chosen a different paper for which I have the data files (linked [**here**](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/RQOCKS))
 
+### a)
 
+The main dependent variable of interest is stock portfolio allocation. The main explanatory variables are retirement, marital status, family labor income, net worth, pension income, number of children, age, health care expenditures. Since this is panel data, the author also includes household and time fixed effects.
 
+### b)
 
+I have been able to replicate these in stata but I aim to translate these into R for my final project. 
 

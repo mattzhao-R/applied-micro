@@ -29,7 +29,7 @@ $$ lwage_i = \beta_0 + \beta_1 educ_i + \beta_3 KWW_i + U_i (1) $$
 
 $$ lwage_i = \beta_0 + \beta_1 HS_i + \beta_2 College_i + \beta_3 KWW_i + U_i$$
 
-```{r}
+```{r, warning=FALSE}
 df <- df %>%
   mutate(HS = ifelse((educ >= 12 & educ < 16),1,0),
          College = ifelse(educ >= 16,1,0))
