@@ -1,0 +1,165 @@
+---
+title: "Applied Micro PSET 3"
+author: "Matthew Zhao"
+date: "2023-01-16"
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(haven)
+library(stargazer)
+library(xtable)
+options(scipen=999)
+```
+
+## Question 1
+
+```{r}
+df1 <- read_stata('data/Y1.dta')
+df2 <- read_stata('data/Y2.dta')
+```
+
+### a)
+
+
+
+### b)
+
+
+
+### c)
+
+
+
+### d)
+
+
+
+### e)
+
+
+
+### f)
+
+
+
+### g)
+
+```{r}
+case1 <- read_stata('data/case1.dta')
+```
+
+
+
+### h)
+
+
+
+### i)
+
+
+
+### j)
+
+
+
+### k)
+
+
+
+### l)
+
+```{r}
+case2 <- read_stata('data/case2.dta')
+```
+
+
+
+### m)
+
+
+
+### n)
+
+
+
+### o)
+
+
+
+### p)
+
+
+
+### q)
+
+
+
+### r)
+
+
+
+### s)
+
+```{r}
+case3 <- read_stata('data/case3.dta')
+```
+
+
+
+### t)
+
+
+
+### u)
+
+
+
+### v)
+
+
+
+### w)
+
+
+
+### x)
+
+
+
+### y)
+
+
+
+### z)
+
+
+
+## Problem 2
+
+
+
+### a)
+
+
+
+### b)
+
+
+
+### c)
+
+
+
+### d)
+
+
+
+
+
