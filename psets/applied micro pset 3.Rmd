@@ -15,6 +15,9 @@ library(tidyverse)
 library(haven)
 library(stargazer)
 library(xtable)
+library(lmtest)
+library(sandwich)
+library(broom)
 options(scipen=999)
 ```
 
@@ -34,14 +37,60 @@ A survey of past studies reveals that additional resources e.g. smaller classroo
 ### b)
 
 https://evalf21.classes.andrewheiss.com/example/standard-errors/
+
 ```{r}
-treatment <- c('bal') #balsakhi
-controls <- c('pre_tot','pre_verb','pre_math','male')
+# cleaning and standardizing data
+year1df <- df1 %>%
+  select(!c(starts_with('mid'),contains('norm'))) %>%
+  filter(!(is.na(pre_verb) | is.na(pre_math) | is.na(post_verb) | is.na(post_math)))
+
+y1_mean_pre_verb_ctrl <- mean((year1df %>% filter(bal == 0))$pre_verb)
+y1_sd_pre_verb_ctrl <- sd((year1df %>% filter(bal == 0))$pre_verb)
+y1_mean_pre_math_ctrl <- mean((year1df %>% filter(bal == 0))$pre_math)
+y1_sd_pre_math_ctrl <- sd((year1df %>% filter(bal == 0))$pre_math)
+y1_mean_pre_tot_ctrl <- mean((year1df %>% filter(bal == 0))$pre_tot)
+y1_sd_pre_tot_ctrl <- sd((year1df %>% filter(bal == 0))$pre_tot)
+
+y1.cleaned <- year1df %>% 
+  mutate(pre_verbnorm = (pre_verb - y1_mean_pre_verb_ctrl)/y1_sd_pre_verb_ctrl,
+         pre_mathnorm = (pre_math - y1_mean_pre_math_ctrl)/y1_sd_pre_math_ctrl,
+         pre_totnorm = (pre_tot - y1_mean_pre_tot_ctrl)/y1_sd_pre_tot_ctrl,
+         post_verbnorm = (post_verb - y1_mean_pre_verb_ctrl)/y1_sd_pre_verb_ctrl,
+         post_mathnorm = (post_math - y1_mean_pre_math_ctrl)/y1_sd_pre_math_ctrl,
+         post_totnorm = (post_tot - y1_mean_pre_tot_ctrl)/y1_sd_pre_tot_ctrl
+         )
 ```
+
+```{r, warning=F}
+# regression balance test
+bal_test1_mlr <- lm(bal ~ pre_totnorm + male, data = y1.cleaned)
+bal_test1_pretotnorm <- lm(bal ~ pre_totnorm, data = y1.cleaned)
+bal_test1_male <- lm(bal ~ male, data = y1.cleaned)
+models <- list(bal_test1_pretotnorm,bal_test1_male,bal_test1_mlr)
+stargazer(models,type='text',digits=3,
+          title='Table 1 - Balance Test')
+```
+
+We find that the coefficients are insignificantly different from 0 with the implication that the groups are likely balanced. Standard errors for this analysis should be clustered since treatment is randomized at the school level, hence the SEs should be clustered at the school level. 
 
 ### c)
 
+```{r, warning=F}
+# table II reproduction
+t2_df <- y1.cleaned %>% 
+  select(c(schoolid,bal,contains('norm'))) %>%
+  pivot_longer(cols = c(contains('norm')),names_to = 'score_cat',values_to='score') %>%
+  mutate(bal_cat = ifelse(bal == 1,'Treatment','Comparison')) %>%
+  group_by(bal_cat,score_cat) %>%
+  summarise(means = )
+  pivot_wider(names_from = bal_cat, values_from = score)
 
+# pre_verb_mean <- lm(bal ~ pre_totnorm, data = y1.cleaned)
+# bal_test1_male <- lm(bal ~ male, data = y1.cleaned)
+# models <- list(bal_test1_pretotnorm,bal_test1_male,bal_test1_mlr)
+# stargazer(models,type='text',digits=3,
+#           title='Table 1 - Balance Test')
+```
 
 ### d)
 
