@@ -27,11 +27,17 @@ df2 <- read_stata('data/Y2.dta')
 
 ### a)
 
+One of the key motivators that the authors cite is that in developing nations, there has been a large push in making primary school universal and specifically getting students enrolled in primary school. However, the literature reveals that while we are able to get students to attend primary school, this has had little impact on actual learning, with students typically many grade levels behind where they should be in terms of core competencies e.g. literacy and numeracy. 
 
+A survey of past studies reveals that additional resources e.g. smaller classroom size or more textbooks, has little effect for the average student but some effect for students who were above average. As a result, the authors in this paper look to seek if supporting weaker students with remedial education, i.e. providing education that is catered towards their actual level of knowledge, and more broadly if resources which target/adjust to a student's actual level of understanding, would produce gains in literacy and numeracy. 
 
 ### b)
 
-
+https://evalf21.classes.andrewheiss.com/example/standard-errors/
+```{r}
+treatment <- c('bal') #balsakhi
+controls <- c('pre_tot','pre_verb','pre_math','male')
+```
 
 ### c)
 
