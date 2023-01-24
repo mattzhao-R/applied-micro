@@ -80,7 +80,7 @@ t2_means <- y1.cleaned %>%
   pivot_longer(cols = c(contains('norm')),names_to = 'score_cat',values_to='score') %>%
   mutate(bal_cat = ifelse(bal == 1,'Treatment','Comparison')) %>%
   group_by(bal_cat,score_cat) %>%
-  summarise(means = mean(score)) %>%
+  summarise(means = mean(score),.groups='keep') %>%
   pivot_wider(names_from = bal_cat, values_from = means) %>%
   filter(!str_detect(score_cat,'tot'))
 
@@ -107,7 +107,8 @@ t2_verb_post_robust_clustered <- tidy(coeftest(t2_verb_post,
                                     cluster = ~schoolid))
 
 #rows <- c('t2_math_pre','t2_verb_pre','t2_math_post','t2_verb_post')
-tableII <- cbind(t2_means,(rbind(t2_math_post_robust_clustered,t2_verb_post_robust_clustered, t2_math_pre_robust_clustered,t2_verb_pre_robust_clustered) %>% filter(term == 'bal') %>% select(!c(term,statistic,p.value)))) %>% mutate(across(where(is.numeric), round, 4))
+t2_regs <- bind_rows(t2_math_post_robust_clustered,t2_verb_post_robust_clustered, t2_math_pre_robust_clustered,t2_verb_pre_robust_clustered) %>% filter(term == 'bal') %>% select(!c(term,statistic,p.value))
+tableII <- bind_cols(t2_means,t2_regs) %>% mutate(across(where(is.numeric), round, 4))
 tableII
 ```
 
