@@ -75,21 +75,42 @@ We find that the coefficients are insignificantly different from 0 with the impl
 
 ### c)
 
-```{r, warning=F}
+```{r, warning=F, message=F}
 # table II reproduction
-t2_df <- y1.cleaned %>% 
+t2_means <- y1.cleaned %>% 
   select(c(schoolid,bal,contains('norm'))) %>%
   pivot_longer(cols = c(contains('norm')),names_to = 'score_cat',values_to='score') %>%
   mutate(bal_cat = ifelse(bal == 1,'Treatment','Comparison')) %>%
   group_by(bal_cat,score_cat) %>%
-  summarise(means = )
-  pivot_wider(names_from = bal_cat, values_from = score)
+  summarise(means = mean(score)) %>%
+  pivot_wider(names_from = bal_cat, values_from = means) %>%
+  filter(!str_detect(score_cat,'tot'))
 
-# pre_verb_mean <- lm(bal ~ pre_totnorm, data = y1.cleaned)
-# bal_test1_male <- lm(bal ~ male, data = y1.cleaned)
-# models <- list(bal_test1_pretotnorm,bal_test1_male,bal_test1_mlr)
-# stargazer(models,type='text',digits=3,
-#           title='Table 1 - Balance Test')
+t2_math_pre <- lm(pre_mathnorm ~ bal, data = y1.cleaned)
+t2_verb_pre <- lm(pre_verbnorm ~ bal, data = y1.cleaned)
+t2_math_post <- lm(post_mathnorm ~ bal, data = y1.cleaned)
+t2_verb_post <- lm(post_verbnorm ~ bal, data = y1.cleaned)
+
+t2_math_pre_robust_clustered <- tidy(coeftest(t2_math_pre,
+                                    vcov = vcovCL,
+                                    type = "HC1",
+                                    cluster = ~schoolid))
+t2_verb_pre_robust_clustered <- tidy(coeftest(t2_verb_pre,
+                                    vcov = vcovCL,
+                                    type = "HC1",
+                                    cluster = ~schoolid))
+t2_math_post_robust_clustered <- tidy(coeftest(t2_math_post,
+                                    vcov = vcovCL,
+                                    type = "HC1",
+                                    cluster = ~schoolid))
+t2_verb_post_robust_clustered <- tidy(coeftest(t2_verb_post,
+                                    vcov = vcovCL,
+                                    type = "HC1",
+                                    cluster = ~schoolid))
+
+#rows <- c('t2_math_pre','t2_verb_pre','t2_math_post','t2_verb_post')
+tableII <- cbind(t2_means,(rbind(t2_math_pre_robust_clustered,t2_verb_pre_robust_clustered,t2_math_post_robust_clustered,t2_verb_post_robust_clustered) %>% filter(term == 'bal') %>% select(!c(term,statistic,p.value)))) %>% mutate(across(where(is.numeric), round, 4))
+tableII
 ```
 
 ### d)
