@@ -18,6 +18,7 @@ library(xtable)
 library(lmtest)
 library(sandwich)
 library(broom)
+library(whitestrap)
 options(scipen=999)
 ```
 
@@ -25,7 +26,6 @@ options(scipen=999)
 
 ```{r}
 df1 <- read_stata('data/Y1.dta')
-df2 <- read_stata('data/Y2.dta')
 ```
 
 ### a)
@@ -35,8 +35,6 @@ One of the key motivators that the authors cite is that in developing nations, t
 A survey of past studies reveals that additional resources e.g. smaller classroom size or more textbooks, has little effect for the average student but some effect for students who were above average. As a result, the authors in this paper look to seek if supporting weaker students with remedial education, i.e. providing education that is catered towards their actual level of knowledge, and more broadly if resources which target/adjust to a student's actual level of understanding, would produce gains in literacy and numeracy. 
 
 ### b)
-
-https://evalf21.classes.andrewheiss.com/example/standard-errors/
 
 ```{r}
 # cleaning and standardizing data
@@ -109,21 +107,105 @@ t2_verb_post_robust_clustered <- tidy(coeftest(t2_verb_post,
                                     cluster = ~schoolid))
 
 #rows <- c('t2_math_pre','t2_verb_pre','t2_math_post','t2_verb_post')
-tableII <- cbind(t2_means,(rbind(t2_math_pre_robust_clustered,t2_verb_pre_robust_clustered,t2_math_post_robust_clustered,t2_verb_post_robust_clustered) %>% filter(term == 'bal') %>% select(!c(term,statistic,p.value)))) %>% mutate(across(where(is.numeric), round, 4))
+tableII <- cbind(t2_means,(rbind(t2_math_post_robust_clustered,t2_verb_post_robust_clustered, t2_math_pre_robust_clustered,t2_verb_pre_robust_clustered) %>% filter(term == 'bal') %>% select(!c(term,statistic,p.value)))) %>% mutate(across(where(is.numeric), round, 4))
 tableII
 ```
 
+I was able to get similar estimates as Table II of the paper. The estimated treatment effect is 0.146 standard deviations for math and 0.103 standard deviations for language. These seem fairly small, and given the size of the robust clustered standard errors, we cannot say that the treatment has a positive and statistically significant effect on student scores. 
+
 ### d)
 
+```{r, warning=F,message=F}
+t3_math <- lm((post_mathnorm - pre_mathnorm) ~ bal + pre_totnorm, data=y1.cleaned)
+t3_verb <- lm((post_verbnorm - pre_verbnorm) ~ bal + pre_totnorm, data=y1.cleaned)
+t3_tot <- lm((post_totnorm - pre_totnorm) ~ bal + pre_totnorm, data=y1.cleaned)
 
+t3_math_robust_clustered <- coeftest(t3_math,
+                                    vcov = vcovCL,
+                                    type = "HC1",
+                                    cluster = ~schoolid)
+t3_verb_robust_clustered <- coeftest(t3_verb,
+                                    vcov = vcovCL,
+                                    type = "HC1",
+                                    cluster = ~schoolid)
+t3_tot_robust_clustered <- coeftest(t3_tot,
+                                    vcov = vcovCL,
+                                    type = "HC1",
+                                    cluster = ~schoolid)
+models <- list(t3_math_robust_clustered,
+               t3_verb_robust_clustered,
+               t3_tot_robust_clustered)
+stargazer(models,type='text',digits=3,
+          dep.var.labels=c('Math','Language','Total'),
+          title='Table 3 - Table III replication: Vadodara Y1 pooled')
+```
+
+Compared with the previous simple comparison of means, we find that there is a positive and statistically significant effect of treatment across outcome categories, with all being significant at the 10% level and math and total score being significant at the 1% level. Specifically, we see that controlling for normalized total pretest score improves the precision of estimates of the treatment effect. 
 
 ### e)
 
+```{r, warning=F}
+df2 <- read_stata('data/Y2.dta')
 
+df_bothyr <- left_join(df1 %>% 
+                     select(!contains('post')),
+                   df2 %>% 
+                     select(!contains('pre')),
+                   suffix=c("",".y"), by='studentid',) %>%
+  select(!c(starts_with('mid'),contains('norm'),ends_with('.y'))) %>%
+  filter(!(is.na(pre_verb) | is.na(pre_math) | is.na(post_verb) | is.na(post_math)))
+
+bothyr_mean_pre_verb_ctrl <- mean((df_bothyr %>% filter(bal == 0))$pre_verb)
+bothyr_sd_pre_verb_ctrl <- sd((df_bothyr %>% filter(bal == 0))$pre_verb)
+bothyr_mean_pre_math_ctrl <- mean((df_bothyr %>% filter(bal == 0))$pre_math)
+bothyr_sd_pre_math_ctrl <- sd((df_bothyr %>% filter(bal == 0))$pre_math)
+bothyr_mean_pre_tot_ctrl <- mean((df_bothyr %>% filter(bal == 0))$pre_tot)
+bothyr_sd_pre_tot_ctrl <- sd((df_bothyr %>% filter(bal == 0))$pre_tot)
+
+bothyr.cleaned <- df_bothyr %>% 
+  mutate(pre_verbnorm = (pre_verb - bothyr_mean_pre_verb_ctrl)/bothyr_sd_pre_verb_ctrl,
+         pre_mathnorm = (pre_math - bothyr_mean_pre_math_ctrl)/bothyr_sd_pre_math_ctrl,
+         pre_totnorm = (pre_tot - bothyr_mean_pre_tot_ctrl)/bothyr_sd_pre_tot_ctrl,
+         post_verbnorm = (post_verb - bothyr_mean_pre_verb_ctrl)/bothyr_sd_pre_verb_ctrl,
+         post_mathnorm = (post_math - bothyr_mean_pre_math_ctrl)/bothyr_sd_pre_math_ctrl,
+         post_totnorm = (post_tot - bothyr_mean_pre_tot_ctrl)/bothyr_sd_pre_tot_ctrl
+         )
+
+bothyr_t3_math <- lm((post_mathnorm - pre_mathnorm) ~ bal + pre_totnorm, data=bothyr.cleaned)
+bothyr_t3_verb <- lm((post_verbnorm - pre_verbnorm) ~ bal + pre_totnorm, data=bothyr.cleaned)
+bothyr_t3_tot <- lm((post_totnorm - pre_totnorm) ~ bal + pre_totnorm, data=bothyr.cleaned)
+
+bothyr_t3_math_robust_clustered <- coeftest(bothyr_t3_math,
+                                    vcov = vcovCL,
+                                    type = "HC1",
+                                    cluster = ~schoolid)
+bothyr_t3_verb_robust_clustered <- coeftest(bothyr_t3_verb,
+                                    vcov = vcovCL,
+                                    type = "HC1",
+                                    cluster = ~schoolid)
+bothyr_t3_tot_robust_clustered <- coeftest(bothyr_t3_tot,
+                                    vcov = vcovCL,
+                                    type = "HC1",
+                                    cluster = ~schoolid)
+models <- list(bothyr_t3_math_robust_clustered,
+               bothyr_t3_verb_robust_clustered,
+               bothyr_t3_tot_robust_clustered)
+stargazer(models,type='text',digits=3,
+          dep.var.labels=c('Math','Language','Total'),
+          title='Table 3 - Table III replication: Vadodara Two-year pooled')
+```
+
+We find similar two-year effects as the paper. Our coefficients are larger now at similar significance levels to part d. Our estimated two-year treatment effect is larger than the one-year treatment effect which makes sense given that the study was designed so that students who received treatment in year 1 in grade 3 would continue to do so in year 2 in grade 4. 
 
 ### f)
 
+Internal Validity: could be issues with selection e.g. randomized at school level but could be the case that certain areas are more wealthy and this could result in schools being skewed leading to biased effects?
 
+Another more likely one is partial compliance since we see that in Mumbai not all schools assigned for treatment actually got it since there were administrative issues. Given the reason for not getting treatment, it could be the case that these schools are systematically lower quality than the schools that did receive treatment. This could have potentially biased the estimated effect upwards if students in these schools were more likely to get less benefit from the program. 
+
+There are a larger number of threats to external validity. In particular, since the experiment was conducted in large cities in India, there are doubts as to whether this could generalize to local regions where finding balsakhi may be more difficult. This could be due to administrative burden like in Mumbai or because there are fewer educated young women in less populated areas. 
+
+Furthermore, we do not know if this program could be used in other developing nations to support learning, since it relies on the presence of balsakhi or at least some substitute to keep the program going. 
 
 ### g)
 
@@ -131,17 +213,72 @@ tableII
 case1 <- read_stata('data/case1.dta')
 ```
 
+```{r, warning=F}
+# regression balance test
+bal_case1_mlr <- lm(treated ~ pre_totnorm + male + income + numstud, data = case1)
+bal_case1_pretotnorm <- lm(treated ~ pre_totnorm, data = case1)
+bal_case1_male <- lm(treated ~ male, data = case1)
+bal_case1_inc <- lm(treated ~ income, data = case1)
+bal_case1_numstud <- lm(treated ~ numstud, data = case1)
 
+models <- list(bal_case1_numstud,bal_case1_inc,bal_case1_male)
+stargazer(models,type='text',digits=3,column.sep.width = "-15pt",
+          omit.stat=c("ser"),
+          title='Table 4 - Case 1 Balance Test')
+```
+
+```{r, warning=F}
+models <- list(bal_case1_pretotnorm,bal_case1_mlr)
+stargazer(models,type='text',digits=3,column.sep.width = "-15pt",
+          omit.stat=c("ser"),
+          title='Table 4 (cont) - Case 1 Balance Test')
+```
+
+Here, we identify a potential issue with randomization where it appears that the treatment may not have been perfectly randomized over income, resulting in a significant coefficient and F-stat. Normalized total pre-test score also seems to have a similar relationship which could be explained by the design of the program but should be noted. The other variables appear to be balanced. 
 
 ### h)
 
+```{r, warning=F}
+case1_base <- lm((Finalscore - pre_totnorm) ~ treated, data=case1)
+case1_ov <- lm((Finalscore - pre_totnorm) ~ treated + pre_totnorm + income, data=case1)
+models <- list(case1_base,case1_ov)
+stargazer(models,type='text',digits=3,
+          column.sep.width = "-15pt",
+          omit.stat=c("ser"),
+          title='Table 5 - Case 1 Estimate of Causal Effect')
+```
 
+I estimate the causal effect of treatment on score to be around 0.3 standard deviations. I show that controlling for other pre-treatment variables noted in the balance test does not change the effect from the baseline regression. Since the estimate of the causal effect is robust to these variables, I believe that this estimate is the causal effect of interest, given that there is little reason to believe in selection and there is no attrition. 
 
 ### i)
 
+```{r, warning=F}
+case1_base <- lm((Finalscore - pre_totnorm) ~ treated, data=case1)
+case1_ov <- lm((Finalscore - pre_totnorm) ~ treated + pre_totnorm + income, data=case1)
+case1_ctrl <- lm((Finalscore - pre_totnorm) ~ treated + pre_totnorm + income + male + std + numstud, data=case1)
 
+# checking for heteroskedasticity
+bptest(case1_base)
+white_test(case1_base)
+```
+
+```{r}
+models <- list(case1_base,case1_ov,case1_ctrl)
+stargazer(models,type='text',digits=3,
+          column.sep.width = "-15pt",
+          omit.stat=c("ser"),
+          title='Table 6 - Case 1 Alternative Specifications')
+```
+
+We do not see any heteroskedasticity based on the BP and White tests. Furthermore, we cannot improve the precision of our estimate with additional controls. 
 
 ### j)
+
+```{r}
+ggplot(data = case1, mapping=aes(x=Finalscore - pre_totnorm)) + 
+  geom_histogram() + 
+  facet_grid(male~cut(income,3))
+```
 
 
 
