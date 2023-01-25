@@ -278,19 +278,20 @@ We do not see any heteroskedasticity based on the BP and White tests. Furthermor
 
 ### j)
 
-```{r}
-ggplot(data = case1, mapping=aes(x=Finalscore - pre_totnorm)) + 
-  geom_histogram(bins=15) + 
-  facet_grid(male~cut(income,3))
+```{r, warning=F}
+case1_hte_inc <- lm((Finalscore - pre_totnorm) ~ treated + pre_totnorm + male + income*treated, data=case1)
+case1_hte_male <- lm((Finalscore - pre_totnorm) ~ treated + pre_totnorm + income + male*treated, data=case1)
+case1_hte_full <- lm((Finalscore - pre_totnorm) ~ treated + pre_totnorm + income*treated + male*treated, data=case1)
+
+
+models <- list(case1_hte_inc,case1_hte_male,case1_hte_full)
+stargazer(models,type='text',digits=3,
+          column.sep.width = "-15pt",
+          omit.stat=c('rsq','adj.rsq',"ser"),
+          title='Table 6 (cont) - Case 1 Alternative Specifications with HTE')
 ```
 
-```{r}
-ggplot(data = case1, mapping=aes(x=Finalscore - pre_totnorm)) + 
-  geom_histogram(bins=15) + 
-  facet_grid(std~cut(numstud,3))
-```
-
-The treatment effect appears to be similar across gender and grade. Additionally, while we see a slightly more left skewed distribution of treatment effects for smaller classrooms and lower income, the difference is fairly negligible.  
+Using interactions between treatment and various controls, we test for potential heterogeneous treatment effects and find little evidence that this is the case. 
 
 ### k)
 
@@ -406,19 +407,20 @@ We can improve the precision of our estimate of the treatment effect by adding i
 
 ### o)
 
-```{r}
-ggplot(data = case2, mapping=aes(x=Finalscore - pre_totnorm)) + 
-  geom_histogram(bins=15) + 
-  facet_grid(male~cut(income,5))
+```{r, warning=F}
+case2_hte_inc <- lm((Finalscore - pre_totnorm) ~ treated + pre_totnorm + male + side + income*treated, data=case2)
+case2_hte_side <- lm((Finalscore - pre_totnorm) ~ treated + pre_totnorm + income + side*treated + male, data=case2)
+case2_hte_full <- lm((Finalscore - pre_totnorm) ~ treated + pre_totnorm + income*treated + male*treated + side*treated, data=case2)
+
+
+models <- list(case2_hte_inc,case2_hte_side,case2_hte_full)
+stargazer(models,type='text',digits=3,
+          column.sep.width = "-15pt",
+          omit.stat=c('rsq','adj.rsq',"ser"),
+          title='Table 9 (cont) - Case 2 Alternative Specifications with HTE')
 ```
 
-```{r}
-ggplot(data = case2, mapping=aes(x=Finalscore - pre_totnorm)) + 
-  geom_histogram(bins=15) + 
-  facet_grid(side~cut(income,3))
-```
-
-The treatment effect differs across side, with side == 1 being shifted right (higher difference in SD score) and side == 0 shifted left (lower difference in SD score). 
+We see strong evidence that the treatment effect is heterogeneous for the side group based on the fact that the interaction term is highly significant, with side == 1 resulting in greater treatment effect.
 
 ### p)
 
@@ -547,19 +549,55 @@ We do not get an unbiased estimate of the causal effect of treatment on the outc
 
 ### w)
 
+```{r warning=F}
+library(ivreg)
 
+case3.tsls <- case3 %>%
+  mutate(Y = Finalscore-pre_totnorm,
+         D = treated,
+         Z = TreatmentGroup)
+
+case3_firststage <- lm(D ~ Z, data = case3.tsls)
+case3_reduced <- lm(Y ~ Z, data = case3.tsls)
+case3_tsls <- ivreg(formula = Y ~ D|Z, data = case3.tsls)
+
+stargazer(list(case3_firststage,case3_reduced,case3_tsls),
+          type='text',digits=3,column.sep.width = "-15pt",
+          dep.var.labels=c('First Stage','Reduced Form','TSLS Estimate'),
+          title='Table 14 - Case 3 TSLS')
+```
+
+This is an unbiased estimate of the treatment effect. This part of the population relates to compliers, that this, individuals who were assigned to the treatment group and eventually were treated. LATE is higher because in ITT our treatment effect includes people who were assigned to the treatment group and did not receive treatment. This means that since our treatment effect is positive, these noncompliers lower our estimated treatment effect since we are counting these individuals who likely have a lower outcome since they never got treated as being treated. Hence the LATE is higher because it only looks at those who actually got treated. 
 
 ### x)
 
+```{r, warning=F}
+# true effect
+mean((case3 %>% filter(treated==1))$Y1 - (case3 %>% filter(treated==1))$Y0)
+```
 
+```{r, fig.dim=c(5,4), out.width='75%'}
+ggplot(data=case3, mapping=aes(x=Y1-Y0)) + 
+  geom_density(mapping=aes(fill=cut(income,4)),alpha = 0.2) + 
+  geom_vline(xintercept=0)
+ggplot(data=case3, mapping=aes(x=Y1-Y0)) +
+  geom_density(alpha = 0.2) + 
+  geom_vline(xintercept=0)
+```
 
 ### y)
 
+```{r, fig.dim=c(5,4), out.width='75%'}
+ggplot(data=case3.t %>% filter(TreatmentGroup == 1), mapping=aes(x=Y1-Y0)) + 
+  geom_density(mapping=aes(fill=as.factor(dropout)),alpha = 0.2) + 
+  geom_vline(xintercept=0)
+```
 
+It appears that people who were likely to have a negative treatment effect chose to dropout and not receive the treatment. This behavior is logical since if an individual has some idea that they may not benefit from the treatment they naturally should attempt to not receive the treatment. However, this does not explain those who would receive a positive treatment effect dropping out. This is most likely because people do not exactly know their true treatment effect (i.e. imperfect information about treatment) and at the margin may choose to drop out.
 
 ### z)
 
-
+We have seen that treatment effects can vary across both observed and unobserved dimensions of the data and that it is important to check for heterogeneous treatment effects as well as heteroskedasticity in your results. Additionally, we see that compliance is extremely important for the validity of RCT results, given that differential attrition can be due to selection by individuals on dimensions that are unobservable for the researcher. While RCT provides a gold standard for causal analyses and relies on relatively few dubious/difficult to validate assumptions, we must be careful in designing our experiment and subsequently analyzing its results to ensure that the necessary conditions hold to get the causal treatment effect of interest. 
 
 ## Problem 2
 
