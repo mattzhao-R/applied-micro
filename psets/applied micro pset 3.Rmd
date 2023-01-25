@@ -66,6 +66,7 @@ bal_test1_pretotnorm <- lm(bal ~ pre_totnorm, data = y1.cleaned)
 bal_test1_male <- lm(bal ~ male, data = y1.cleaned)
 models <- list(bal_test1_pretotnorm,bal_test1_male,bal_test1_mlr)
 stargazer(models,type='text',digits=3,
+          omit.stat=c('rsq','adj.rsq',"ser"),
           title='Table 1 - Balance Test')
 ```
 
@@ -138,6 +139,7 @@ models <- list(t3_math_robust_clustered,
                t3_tot_robust_clustered)
 stargazer(models,type='text',digits=3,
           dep.var.labels=c('Math','Language','Total'),
+          omit.stat=c('rsq','adj.rsq',"ser"),
           title='Table 3 - Table III replication: Vadodara Y1 pooled')
 ```
 
@@ -193,6 +195,7 @@ models <- list(bothyr_t3_math_robust_clustered,
                bothyr_t3_tot_robust_clustered)
 stargazer(models,type='text',digits=3,
           dep.var.labels=c('Math','Language','Total'),
+          omit.stat=c('rsq','adj.rsq',"ser"),
           title='Table 3 - Table III replication: Vadodara Two-year pooled')
 ```
 
@@ -224,14 +227,14 @@ bal_case1_numstud <- lm(treated ~ numstud, data = case1)
 
 models <- list(bal_case1_numstud,bal_case1_inc,bal_case1_male)
 stargazer(models,type='text',digits=3,column.sep.width = "-15pt",
-          omit.stat=c("ser"),
+          omit.stat=c('rsq','adj.rsq',"ser"),
           title='Table 4 - Case 1 Balance Test')
 ```
 
 ```{r, warning=F}
 models <- list(bal_case1_pretotnorm,bal_case1_mlr)
 stargazer(models,type='text',digits=3,column.sep.width = "-15pt",
-          omit.stat=c("ser"),
+          omit.stat=c('rsq','adj.rsq',"ser"),
           title='Table 4 (cont) - Case 1 Balance Test')
 ```
 
@@ -245,11 +248,11 @@ case1_ov <- lm((Finalscore - pre_totnorm) ~ treated + pre_totnorm + income, data
 models <- list(case1_base,case1_ov)
 stargazer(models,type='text',digits=3,
           column.sep.width = "-15pt",
-          omit.stat=c("ser"),
+          omit.stat=c('rsq','adj.rsq',"ser"),
           title='Table 5 - Case 1 Estimate of Causal Effect')
 ```
 
-I estimate the causal effect of treatment on score to be around 0.3 standard deviations. I show that controlling for other pre-treatment variables noted in the balance test does not change the effect from the baseline regression. Since the estimate of the causal effect is robust to these variables, I believe that this estimate is the causal effect of interest, given that there is little reason to believe in selection and there is no attrition. 
+I estimate the causal effect of treatment on score to be around 0.3 standard deviations. I show that controlling for other pre-treatment variables noted in the balance test does not change the effect from the baseline regression. Since the estimate of the causal effect is robust to these variables, I believe that this estimate is the causal effect of interest to the extent that we have shown randomization and can assume the treatment is uncorrelated with unobservables from that. We are also told there is no attrition. 
 
 ### i)
 
@@ -263,11 +266,11 @@ bptest(case1_base)
 white_test(case1_base)
 ```
 
-```{r}
+```{r, warning=F}
 models <- list(case1_base,case1_ov,case1_ctrl)
 stargazer(models,type='text',digits=3,
           column.sep.width = "-15pt",
-          omit.stat=c("ser"),
+          omit.stat=c('rsq','adj.rsq',"ser"),
           title='Table 6 - Case 1 Alternative Specifications')
 ```
 
@@ -277,15 +280,43 @@ We do not see any heteroskedasticity based on the BP and White tests. Furthermor
 
 ```{r}
 ggplot(data = case1, mapping=aes(x=Finalscore - pre_totnorm)) + 
-  geom_histogram() + 
+  geom_histogram(bins=15) + 
   facet_grid(male~cut(income,3))
 ```
 
+```{r}
+ggplot(data = case1, mapping=aes(x=Finalscore - pre_totnorm)) + 
+  geom_histogram(bins=15) + 
+  facet_grid(std~cut(numstud,3))
+```
 
+The treatment effect appears to be similar across gender and grade. Additionally, while we see a slightly more left skewed distribution of treatment effects for smaller classrooms and lower income, the difference is fairly negligible.  
 
 ### k)
 
+```{r, warning=F}
+# true effect
+mean(case1$Y1 - case1$Y0)
+```
 
+```{r, fig.dim=c(5,4), out.width='75%'}
+ggplot(data = case1, mapping=aes(x=Y1 - Y0)) + 
+  geom_histogram(bins=30) +
+  ggtitle('Treatment effect for whole sample')
+ggplot(data = case1 %>% filter(treated == 1), mapping=aes(x=Y1 - Y0)) + 
+  geom_histogram(bins=30) +
+  ggtitle('Treatment effect for Treated')
+ggplot(data = case1 %>% filter(treated == 0), mapping=aes(x=Y1 - Y0)) + 
+  geom_histogram(bins=30) +
+  ggtitle('Treatment effect for Untreated')
+
+case1 %>% 
+  mutate(trt_effect = cut(Y1-Y0,10)) %>%
+  group_by(trt_effect) %>%
+  count()
+```
+
+We see that the treatment effect is roughly normally distributed across the sample. Furthermore, we see little evidence of sorting or any selection in relation to the treatment. Since our subgroup analysis in part j revealed little difference across observable groups, we do not further investigate these variables. 
 
 ### l)
 
@@ -293,31 +324,137 @@ ggplot(data = case1, mapping=aes(x=Finalscore - pre_totnorm)) +
 case2 <- read_stata('data/case2.dta')
 ```
 
+```{r, warning=F}
+# regression balance test
+bal_case2_mlr <- lm(treated ~ pre_totnorm + male + income + numstud + side, data = case2)
+bal_case2_pretotnorm <- lm(treated ~ pre_totnorm, data = case2)
+bal_case2_side <- lm(treated ~ side, data = case2)
+bal_case2_male <- lm(treated ~ male, data = case2)
+bal_case2_inc <- lm(treated ~ income, data = case2)
+bal_case2_numstud <- lm(treated ~ numstud, data = case2)
 
+models <- list(bal_case2_numstud,bal_case2_inc,bal_case2_male)
+stargazer(models,type='text',digits=3,column.sep.width = "-15pt",
+          omit.stat=c('rsq','adj.rsq',"ser"),
+          title='Table 7 - Case 2 Balance Test')
+```
+
+```{r, warning=F}
+models <- list(bal_case2_pretotnorm,bal_case2_side,bal_case2_mlr)
+stargazer(models,type='text',digits=3,column.sep.width = "-15pt",
+          omit.stat=c('rsq','adj.rsq',"ser"),
+          title='Table 7 (cont) - Case 2 Balance Test')
+```
+
+Since the F-stats are all small and insignificant, we can conclude that the groups are balanced. 
 
 ### m)
 
+```{r, warning=F}
+case2_base <- lm((Finalscore - pre_totnorm) ~ treated, data=case2)
+case2_unobs <- lm((Finalscore - pre_totnorm) ~ treated + pre_totnorm + income, data=case2)
+case2_ov <- lm((Finalscore - pre_totnorm) ~ treated + pre_totnorm + income + side, data=case2)
 
+stargazer(list(case2_base,case2_unobs,case2_ov),type='text',digits=4,
+          column.sep.width = "-15pt",
+          omit.stat=c('rsq','adj.rsq',"ser"),
+          title='Table 8 - Case 2 Estimate of Causal Effect')
+```
+
+```{r}
+# checking for heteroskedasticity
+print('Base Case:')
+bptest(case2_base)
+white_test(case2_base)
+print('With Controls:')
+bptest(case2_unobs)
+white_test(case2_unobs)
+print('With Controls + side:')
+bptest(case2_ov)
+white_test(case2_ov)
+```
+
+```{r, warning=F}
+case2_base_robust <- coeftest(case2_base, vcov = vcovHC(case2_base, type = 'HC1'))
+case2_unobs_robust <- coeftest(case2_unobs, vcov = vcovHC(case2_unobs, type = 'HC1'))
+
+round(case2_base_robust,4)
+round(case2_unobs_robust,4)
+```
+
+After examining the inital regression results, I testd for heteroskedasticity using the BP and White tests. I find that the tests strongly reject the null of homoskedasticity for both the baseline model and the model with observed controls As a result, I re-estimate the models with robust standard errors, finding negligible change. 
+
+I estimate the causal effect of treatment on score to be around 0.0467 standard deviations. After using robust standard errors, the baseline model should no longer exhibit heteroskedasticity, with the standard errors and estimate of treatment effect not changing. Furthermore, I believe that the estimate of $\beta_D$ is consistent here because side is correlated with the outcome (Finalscore-pre_totnorm) but is uncorrelated with treated. 
 
 ### n)
 
+```{r, warning=F}
+case2_base <- lm((Finalscore - pre_totnorm) ~ treated, data=case2)
+case2_ov <- lm((Finalscore - pre_totnorm) ~ treated + pre_totnorm + income + side, data=case2)
+case2_ctrl <- lm((Finalscore - pre_totnorm) ~ treated + pre_totnorm + income + male + std + numstud + side, data=case2)
+```
 
+```{r, warning=F}
+models <- list(case2_base,case2_ov,case2_ctrl)
+stargazer(models,type='text',digits=4,
+          column.sep.width = "-15pt",
+          omit.stat=c('rsq','adj.rsq',"ser"),
+          title='Table 9 - Case 2 Alternative Specifications')
+```
+
+We can improve the precision of our estimate of the treatment effect by adding in side since it uniquely accounts for a portion of the variation in our outcome since it is correlated with Y but not D or any other controls. 
 
 ### o)
 
+```{r}
+ggplot(data = case2, mapping=aes(x=Finalscore - pre_totnorm)) + 
+  geom_histogram(bins=15) + 
+  facet_grid(male~cut(income,5))
+```
 
+```{r}
+ggplot(data = case2, mapping=aes(x=Finalscore - pre_totnorm)) + 
+  geom_histogram(bins=15) + 
+  facet_grid(side~cut(income,3))
+```
+
+The treatment effect differs across side, with side == 1 being shifted right (higher difference in SD score) and side == 0 shifted left (lower difference in SD score). 
 
 ### p)
 
+```{r, warning=F}
+# true effect
+mean(case2$Y1 - case2$Y0)
+```
 
+```{r, fig.dim=c(5,4), out.width='75%'}
+ggplot(data=case2, mapping=aes(x=Y1-Y0)) + 
+  geom_density(mapping=aes(fill=as.factor(side)),alpha = 0.2)
+ggplot(data=case2, mapping=aes(x=Y1-Y0)) +
+  geom_density(alpha = 0.2)
+```
+
+```{r}
+case2 %>%
+  group_by(side) %>%
+  summarise(score_diff = mean(Finalscore-pre_totnorm),.groups = 'keep')
+```
+
+Our estimate of the treatment effect is slightly higher than the actual treatment effect. This could be due to sorting, where those who will benefit more from the treatment e.g. those with side == 1 tend to be in the treatment group more often. Since side is unobserved, it is difficult to account for when stratifying a sample for randomization and poses selection concerns.
 
 ### q)
 
+```{r, fig.dim=c(5,4), out.width='75%'}
+ggplot(data=case2, mapping=aes(x=Y1-Y0)) + 
+  geom_density(alpha = 0.2) + 
+  facet_wrap(~side,nrow=2)
+```
 
+The treatment effect is higher for those with side == 1 than side == 0. As a result, our estimated causal effect of treatment in part m is slightly off because while the distribution of side == 1 and side == 0 is roughly even across treated and untreated groups, the effect of treatment on those with side == 1 is more positive than the effect of treatment on those with side == 0 is negative. As a result, there is a slight upwards bias on the estimated effect in m since the two groups which split the sample have a non-insignificant difference in conditional average treatment effect. 
 
 ### r)
 
-
+The average effect for the treated is not meaningful in this case because there are two distinctly separate groups which have different CATT that are not only different magnitude but more importantly in different directions. As a result, we care significantly more about the conditional average treatment effect, especially if side is an indicator for a threshold of total family wealth e.g. if side == 1 represents below poverty line we would want to specifically target those who would actually benefit and avoid treating those who would be negatively affected. 
 
 ### s)
 
@@ -325,7 +462,26 @@ case2 <- read_stata('data/case2.dta')
 case3 <- read_stata('data/case3.dta')
 ```
 
+```{r, warning=F}
+# regression balance test
+tgbal_case3_mlr <- lm(TreatmentGroup ~ pre_totnorm + male + income + numstud, data = case3)
+tgbal_case3_pretotnorm <- lm(TreatmentGroup ~ pre_totnorm, data = case3)
+tgbal_case3_male <- lm(TreatmentGroup ~ male, data = case3)
+tgbal_case3_inc <- lm(TreatmentGroup ~ income, data = case3)
+tgbal_case3_numstud <- lm(TreatmentGroup ~ numstud, data = case3)
 
+models <- list(tgbal_case3_numstud,tgbal_case3_inc,tgbal_case3_male)
+stargazer(models,type='text',digits=3,column.sep.width = "-15pt",
+          omit.stat=c('rsq','adj.rsq',"ser"),
+          title='Table 10 - Case 3 Treatment Group Balance Test')
+```
+
+```{r, warning=F}
+models <- list(tgbal_case3_pretotnorm,tgbal_case3_mlr)
+stargazer(models,type='text',digits=3,column.sep.width = "-15pt",
+          omit.stat=c('rsq','adj.rsq',"ser"),
+          title='Table 10 (cont) - Case 3 Treatment Group Balance Test')
+```
 
 ### t)
 
