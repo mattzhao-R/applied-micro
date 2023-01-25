@@ -445,12 +445,11 @@ Our estimate of the treatment effect is slightly higher than the actual treatmen
 ### q)
 
 ```{r, fig.dim=c(5,4), out.width='75%'}
-ggplot(data=case2, mapping=aes(x=Y1-Y0)) + 
-  geom_density(alpha = 0.2) + 
-  facet_wrap(~side,nrow=2)
+ggplot(data=case2, mapping=aes(x=Y1-Y0,fill = as.factor(side))) + 
+  geom_density(alpha = 0.2)
 ```
 
-The treatment effect is higher for those with side == 1 than side == 0. As a result, our estimated causal effect of treatment in part m is slightly off because while the distribution of side == 1 and side == 0 is roughly even across treated and untreated groups, the effect of treatment on those with side == 1 is more positive than the effect of treatment on those with side == 0 is negative. As a result, there is a slight upwards bias on the estimated effect in m since the two groups which split the sample have a non-insignificant difference in conditional average treatment effect. 
+The actual treatment effect is higher for those with side == 1 than side == 0. As a result, our estimated causal effect of treatment in part m is slightly off because while the distribution of side == 1 and side == 0 is roughly even across treated and untreated groups, the effect of treatment on those with side == 1 is more positive than the effect of treatment on those with side == 0 is negative. As a result, there is a slight upwards bias on the estimated effect in m since the two groups which split the sample have a non-insignificant difference in conditional average treatment effect. 
 
 ### r)
 
@@ -482,18 +481,69 @@ stargazer(models,type='text',digits=3,column.sep.width = "-15pt",
           omit.stat=c('rsq','adj.rsq',"ser"),
           title='Table 10 (cont) - Case 3 Treatment Group Balance Test')
 ```
+```{r, warning=F}
+# regression balance test
+trtbal_case3_mlr <- lm(treated ~ pre_totnorm + male + income + numstud, data = case3)
+trtbal_case3_pretotnorm <- lm(treated ~ pre_totnorm, data = case3)
+trtbal_case3_male <- lm(treated ~ male, data = case3)
+trtbal_case3_inc <- lm(treated ~ income, data = case3)
+trtbal_case3_inc_pretotnorm <- lm(treated ~ pre_totnorm + income, data = case3)
+trtbal_case3_numstud <- lm(treated ~ numstud, data = case3)
+
+models <- list(trtbal_case3_numstud,trtbal_case3_inc,trtbal_case3_male)
+stargazer(models,type='text',digits=3,column.sep.width = "-15pt",
+          omit.stat=c('rsq','adj.rsq',"ser"),
+          title='Table 11 - Case 3 Treated Balance Test')
+```
+
+```{r, warning=F}
+models <- list(trtbal_case3_pretotnorm,trtbal_case3_inc_pretotnorm,trtbal_case3_mlr)
+stargazer(models,type='text',digits=3,column.sep.width = "-15pt",
+          omit.stat=c('rsq','adj.rsq',"ser"),
+          title='Table 11 (cont) - Case 3 Treated Balance Test')
+```
+
+While randomization was successful and the treatment and control groups are initially balanced, the eventual groups that did and did not receive treatment are not balanced across income and pre-treatment test score. 
 
 ### t)
 
+```{r warning=F}
+case3.t <- case3 %>%
+  mutate(dropout = TreatmentGroup - treated)
 
+dropout_case3_mlr <- lm(dropout ~ pre_totnorm + male + income + numstud, data = case3.t)
+dropout_case3_inc <- lm(dropout ~ income, data = case3.t)
+dropout_case3_pretotnorm <- lm(dropout ~ pre_totnorm, data = case3.t)
+
+models <- list(dropout_case3_pretotnorm,dropout_case3_inc,dropout_case3_mlr)
+stargazer(models,type='text',digits=3,column.sep.width = "-15pt",
+          omit.stat=c('rsq','adj.rsq',"ser"),
+          title='Table 12 - Case 3 Determinants of Dropout')
+```
+
+The primary determinants of treatment group dropout are income and normalized pre-treatment total score.
 
 ### u)
 
+```{r}
+trtgrp_case3 <- case3 %>% filter(TreatmentGroup == 1)
+ctrlgrp_case3 <- case3 %>% filter(TreatmentGroup == 0)
+mean(trtgrp_case3$Finalscore - trtgrp_case3$pre_totnorm) - mean(ctrlgrp_case3$Finalscore - ctrlgrp_case3$pre_totnorm)
+```
 
+Here we are estimating the effect of being assigned to the treatment group on the difference in normalized total score. The magnitude from a policy point of view is meaningful since 0.2 standard deviations is a fairly large improvement. The ITT effect itself is not meaningful from a policy perspective since it is not the effect of the actual treatment because we have differential attrition across groups, potentially resulting in selection. 
 
 ### v)
 
+```{r warning=F}
+case3_base <- lm(Finalscore-pre_totnorm ~ TreatmentGroup, data=case3)
 
+stargazer(case3_base,type='text',digits=3,column.sep.width = "-15pt",
+          omit.stat=c('rsq','adj.rsq',"ser"),
+          title='Table 13 - Case 3 Baseline ITT')
+```
+
+We do not get an unbiased estimate of the causal effect of treatment on the outcome because attrition was differential across different observable groups. As a result, we can no longer assume randomization and that there was selection at play where people with different observables/unobservables chose to not be treated despite being assigned to the treatment group. As a result, we have OVB in our regression. 
 
 ### w)
 
