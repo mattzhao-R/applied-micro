@@ -1,6 +1,6 @@
 ---
 title: "Applied Micro PSET 3"
-author: "Matthew Zhao"
+author: "Matthew Zhao working with Cedric Elkouh"
 date: "2023-01-16"
 output:
   pdf_document: default
@@ -530,7 +530,8 @@ The primary determinants of treatment group dropout are income and normalized pr
 ```{r}
 trtgrp_case3 <- case3 %>% filter(TreatmentGroup == 1)
 ctrlgrp_case3 <- case3 %>% filter(TreatmentGroup == 0)
-mean(trtgrp_case3$Finalscore - trtgrp_case3$pre_totnorm) - mean(ctrlgrp_case3$Finalscore - ctrlgrp_case3$pre_totnorm)
+mean(trtgrp_case3$Finalscore - trtgrp_case3$pre_totnorm) -
+  mean(ctrlgrp_case3$Finalscore - ctrlgrp_case3$pre_totnorm)
 ```
 
 Here we are estimating the effect of being assigned to the treatment group on the difference in normalized total score. The magnitude from a policy point of view is meaningful since 0.2 standard deviations is a fairly large improvement. The ITT effect itself is not meaningful from a policy perspective since it is not the effect of the actual treatment because we have differential attrition across groups, potentially resulting in selection. 
@@ -601,23 +602,20 @@ We have seen that treatment effects can vary across both observed and unobserved
 
 ## Problem 2
 
-
+I will be working on replicating the paper "Is the price elasticity of demand for coal in China increasing?" Burke and Liao (2015) with Cedric Elkouh. 
 
 ### a)
 
-
+How much did a change in coal prices affect coal consumption in China? Y is consumption of coal and X is an output price index for the mining and washing of coal deflated by the industrial producer price index (Burke and Liao 2015). 
 
 ### b)
 
-
+The ideal randomized experiment would be to have suppliers randomly set prices and see how much coal is demanded to trace out a demand curve for each period to get the elasticity of demand. 
 
 ### c)
 
-
+Naturally it would be impossible to force coal sellers to randomize their prices and potentially some general equilibrium effects and other potential violations of RCT. 
 
 ### d)
 
-
-
-
-
+We would want to add individual level contract information as a control variable so that we could account for different coal sellers and their involvement in setting prices via contracts. This could credibly reduce the selection bias towards zero since we account for the matching in the coal seller-buyer market. 
