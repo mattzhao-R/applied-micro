@@ -1,0 +1,105 @@
+---
+title: "Applied Micro PSET 4"
+author: "Matthew Zhao"
+date: "2023-01-29"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(haven)
+library(stargazer)
+library(xtable)
+library(lmtest)
+library(sandwich)
+library(broom)
+library(whitestrap)
+options(scipen=999)
+```
+
+## Question 1
+
+### a)
+
+
+
+### b)
+
+
+
+### c)
+
+
+
+### d)
+
+
+
+### e)
+
+
+
+### f)
+
+
+
+### g)
+
+
+
+### h)
+
+
+
+## Problem 2
+
+### a)
+
+
+
+### b)
+
+
+
+### c)
+
+
+
+### d)
+
+
+
+### e)
+
+
+
+### f)
+
+
+
+### g)
+
+
+
+### h)
+
+
+
+### i)
+
+
+
+### j)
+
+
+
+## Problem 3
+
+
+### a)
+
+
