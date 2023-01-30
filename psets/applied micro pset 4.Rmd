@@ -25,81 +25,61 @@ options(scipen=999)
 
 ### a)
 
-We interpret $\beta_0$ as the approximate expected job quality for an individual who has not taken an applied microeconometrics class and does not drink on a heavy basis. We interpret $\beta_1$ as the approximate expected change in job quality for an individual who takes an applied microeconometrics course holding their level of drinking fixed. We interpret $\beta_2$ as the approximate expected change in job quality for an individual who has heavy alcohol consumption on a regular basis and holding if they have taken an applied microeconometrics class fixed. 
+We interpret $\beta_0$ as the approximate expected job quality for an individual who has not taken an applied microeconometrics class and does not drink on a heavy basis. We interpret $\beta_1$ as the approximate expected change in job quality for an individual who takes an applied microeconometrics course holding their level of drinking fixed. We interpret $\beta_2$ as the approximate expected change in job quality for an individual who has heavy alcohol consumption on a regular basis and holding if they have taken an applied microeconometrics class fixed.
 
 ### b)
 
-We would suspect that drinking is not truthfully reported and that students may under- or over-report drinking habits i.e. report as heavy drinker even if they're not or report as not heavy drinker even if they are. If drinking is measured with error, particularly if that error is systematic, we may not be able to get an unbiased estimate for the effect of drinking on job quality. $\hat{\beta}_2$ will be unbiased if 
+We would suspect that drinking is not truthfully reported and that students may under- or over-report drinking habits i.e. report as heavy drinker even if they're not or report as not heavy drinker even if they are. If drinking is measured with error, particularly if that error is systematic, we may not be able to get an unbiased estimate for the effect of drinking on job quality. $\hat{\beta}_2$ will be unbiased if
 
 ### c)
 
-
+A violation of MLR.4 would cause $\hat{\beta}_1$ to be biased and thus not accurately estimate $\beta_1$. I believe that MLR.4 is violated in (1) because it is highly likely that there is measurement error in drinking which would cause drinking to be correlated with the error term.
 
 ### d)
 
+There are two assumptions that need to be fulfilled for econ_cost to be a valid instrument for econ. First is that econ_cost must affect the outcome (job quality) only through econ, specifically econ_cost must be independent of the error term (exclusion/exogeneity). The other is that econ_cost must be correlated with econ (relevance).
 
+It is easy to see how econ_cost affects econ by reducing the cost of taking the course since this would naturally prompt more people to take the class. However, it is potentially more difficult to show that econ_cost is independent of the error term. Here we can plausibly say that because econ_cost is an indicator for attending a *randomly* chosen college that offers taking the econometrics class at a lower cost, exogeneity is satisfied.
 
 ### e)
+
+```{=tex}
+\begin{equation}
+\tag{1}
+econ = \pi_0 + \pi_1 female + \nu
+\end{equation}
+```
 
 
 
 ### f)
 
-
-
 ### g)
 
-
-
 ### h)
-
-
 
 ## Problem 2
 
 ### a)
 
-
-
 ### b)
-
-
 
 ### c)
 
-
-
 ### d)
-
-
 
 ### e)
 
-
-
 ### f)
-
-
 
 ### g)
 
-
-
 ### h)
-
-
 
 ### i)
 
-
-
 ### j)
-
-
 
 ## Problem 3
 
-
 ### a)
-
-
