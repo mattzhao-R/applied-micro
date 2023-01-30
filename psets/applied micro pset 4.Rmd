@@ -25,11 +25,11 @@ options(scipen=999)
 
 ### a)
 
-
+We interpret $\beta_0$ as the approximate expected job quality for an individual who has not taken an applied microeconometrics class and does not drink on a heavy basis. We interpret $\beta_1$ as the approximate expected change in job quality for an individual who takes an applied microeconometrics course holding their level of drinking fixed. We interpret $\beta_2$ as the approximate expected change in job quality for an individual who has heavy alcohol consumption on a regular basis and holding if they have taken an applied microeconometrics class fixed. 
 
 ### b)
 
-
+We would suspect that drinking is not truthfully reported and that students may under- or over-report drinking habits i.e. report as heavy drinker even if they're not or report as not heavy drinker even if they are. If drinking is measured with error, particularly if that error is systematic, we may not be able to get an unbiased estimate for the effect of drinking on job quality. $\hat{\beta}_2$ will be unbiased if 
 
 ### c)
 
