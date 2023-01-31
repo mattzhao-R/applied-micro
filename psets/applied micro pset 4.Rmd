@@ -29,11 +29,11 @@ We interpret $\beta_0$ as the approximate expected job quality for an individual
 
 ### b)
 
-We would suspect that drinking is not truthfully reported and that students may under- or over-report drinking habits i.e. report as heavy drinker even if they're not or report as not heavy drinker even if they are. If drinking is measured with error, particularly if that error is systematic, we may not be able to get an unbiased estimate for the effect of drinking on job quality. $\hat{\beta}_2$ will be unbiased if
+We would suspect that drinking is not truthfully reported and that students may under- or over-report drinking habits i.e. report as heavy drinker even if they're not or report as not heavy drinker even if they are. If drinking is measured with error, particularly if that error is uncorrelated with the true value of the drinking variable (and as a result correlated with the observed value of drinking), we may not be able to get an unbiased estimate for the effect of drinking on job quality. $\hat{\beta}_2$ will be unbiased if instead the measurement error is uncorrelated with the observed measure of drinking, given that MLR.1-4 hold.
 
 ### c)
 
-A violation of MLR.4 would cause $\hat{\beta}_1$ to be biased and thus not accurately estimate $\beta_1$. I believe that MLR.4 is violated in (1) because it is highly likely that there is measurement error in drinking which would cause drinking to be correlated with the error term.
+A violation of MLR.4 would cause $\hat{\beta}_1$ to be biased and thus not accurately estimate $\beta_1$. In particular, if the measurement error in drinking is a case of classical errors in variables (CEV) where the observed values are correlated with the measurement errors and there is some relationship between the econ and drinking variables e.g. taking a applied microeconometrics class makes you less likely to consume a large amount of alcohol on a regular basis, we may believe that MLR.4 is violated. 
 
 ### d)
 
@@ -46,23 +46,37 @@ It is easy to see how econ_cost affects econ by reducing the cost of taking the 
 ```{=tex}
 \begin{equation}
 \tag{1}
-econ = \pi_0 + \pi_1 female + \nu
+econ = \pi_0 + \pi_1 econ_cost + \nu
 \end{equation}
 ```
 
-
+We can test instrument relevance by running this regression (econ~econ_cost) and examining the significance of $\pi_1$ via its t-stat and corresponding p-value as well as examining the F-stat to see if the regression coefficients are jointly significant. 
 
 ### f)
 
+The IV estimator $\tilde{\beta}_1$ of $\beta_1$ solves the endogeneity bias issue with our regression because we introduce a proxy for the endogenous variable econ that by assumption is uncorrelated with the error term (which was the original issue with econ). As a result, by estimating $\tilde{\beta}_1$, we are able to isolate the causal effect of econ on job quality that is solely due to the econ variable. 
+
 ### g)
 
+We cannot test if econ_cost is exogenous in the structural model since the full composition of the error term is unknown, and since the exogeneity assumption states that $Cov(econ\_cost,U) = 0$, we are unable to directly test this. However, we can show the extent to which econ_cost is exogenous using any observables that we have in our dataset and in a sense perform a balance test to show that the variable is plausibly exogenous.
+
+If econ_cost is not truly exogenous in the structural model, then we will get a biased estimate of $\beta_1$. Specifically, we can express the IV estimate of $\beta_1$ as $\hat{\beta}_{IV} = \displaystyle \beta + \frac{\hat{Cov}(Z,U)}{\hat{Cov}(X,Z)}$. It is apparent from this expression that if exogeneity is violated, that is $Cov(Z,U) \ne 0$, $\hat{\beta}_{IV} \ne \beta$.
+
 ### h)
+
+If econ_cost is a weak instrument, this means that the correlation betwene econ_cost and econ is small resulting in a weak first-stage. Since the probability limit of the IV estimator $\underset{n\to \infty}{\text{plim}}$ $\tilde{\beta}_1 = \beta_1 + \displaystyle \frac{Cov(Z,U)}{Cov(X,Z)}$, even if $Cov(X,Z)$ is small, as long as exogeneity holds, the IV estimator will remain consistent. However, since $Var(\tilde{\beta}_1) = \displaystyle \frac{\sigma^2}{SST_X \rho^2_{X,Z}}$, if the instrument is weak, the variance of the IV estimator will be large. Furthermore, the bias of 2SLS can be expressed as $\mathbb{E}[\hat{\beta}^{2SLS} -\beta] \approx \frac{\sigma_{\epsilon U}}{\sigma^2_{\epsilon}} \frac{1}{F+1}$. If the instrument is weak, $F$ which is the population analogue of the F-stat for the joint significance of the instruments in the first-stage, will be small. This causes the bias of 2SLS to approach that of OLS, resulting in the IV estimator giving a biased estimate of $\beta_1$.
+
+If econ_cost is both a weak instrument and exogeneity is violated, we can see from the first equation above that $\tilde{\beta}_1$ will no longer be a consistent estimator for $\beta_1$ since $Cov(X,Z)$ is small while $Cov(Z,U) \ne 0$, meaning that the additional term will not go to zero and $\tilde{\beta}_1$ will not converge in probability to $\beta_1$. In this case, we would prefer the OLS estimator $\hat{\beta}_1$ to the IV estimator because the OLS estimator has smaller asymptotic variance. 
 
 ## Problem 2
 
 ### a)
 
+The authors use an instrumental variables strategy to determine the causal effect of compulsory schooling on earnings. Specifically, they use quarter of birth as an instrument for compulsory schooling. Quarter of birth is plausibly random (hence exogenous), since we believe that quarter of birth is likely not related to personal attributes other than age at school entry. The instrument is related to compulsory schooling via school start age policies and compulsory school attendance law, whereby students born in the first quarter of the year tend to attend school for a fewer number of years due to reaching the minimum legal dropout age earlier in their educational careers.
+
 ### b)
+
+One potential violation is that quarter of birth is correlated with family background in some way e.g. parents who are more educated/wealthy tend to have children towards the end of the year. Another is that students who are born earlier in the year tend enter school at an older age and so are more likely to 
 
 ### c)
 
