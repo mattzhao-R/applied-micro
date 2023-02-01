@@ -18,6 +18,7 @@ library(lmtest)
 library(sandwich)
 library(broom)
 library(whitestrap)
+library(fastDummies)
 options(scipen=999)
 ```
 
@@ -88,13 +89,65 @@ The first two panels show highly significant coefficients for the quarter dummie
 
 ### d)
 
+We could if other developed nations had similar institutional structures relating to compulsory schooling laws that are based on birth dates. This would generate the exogenous variation in educational attainment that the authors exploited for their instrumental variables strategy and allow us to apply this identification strategy in other settings. 
+
 ### e)
+
+This could potentially be a problem since the instruments used by the authors may be weak i.e. quarter of birth has little ability to explain the variation in schooling. We may be led to believe that this is the case because the TSLS estimates of $beta_1$ appear to vary wildly for different specifications and at times are extremely large, indicating that $Cov(X,Z)$ may be small. While the authors attempt to address this relevance assumption in Table II by showing that compulsory schooling laws have a statistically significant effect on enrollment rates, we are unable to conclusively say they have shown relevance of the instruments. **does many instruments/overidentification also affect relevance?**
 
 ### f)
 
+The primary difference between the specifications in Table V and Table VII is that Table VII includes state fixed effects as well as higher level interactions. While this improves the precision of the TSLS estimates, it also removes some of the variation in the instruments which likely further weakens our ability to satisfy the relevance assumption. Additionally, adding more weak instruments likely biases the TSLS estimate towards that of OLS, as well as potentially violating instrument exogeneity. **What does adding more weak instruments actually do besides biasing $\beta^{TSLS}$ towards $\beta^{OLS}$**
+
+Given that the estimates in Table V face the issues of weak instruments and overidentification, it is likely that these estimates are already biased and do not recover the causal effect of interest. If exogeneity is still plausible, then the estimate is at least consistent. However, with Table VII there is potentially a greater chance that instrument exogeneity is violated since there are 180 instruments. These estimates also face the same dual issue of overidentification and weak instruments and are likely extremely biased to the point of being the same as the OLS estimates.  
+
 ### g)
 
+Even if the IV estimates in the paper are internally valid, it is unlikely that the estimates are generalizable to the average effect of education on earnings in the population as a whole. One reason is that education in high school is simply different than education provided during other periods of life, so at most this would describe the average effect of education on earnings specifically for additional years of high school education. Furthermore, there are likely heterogeneous treatment effects of education on earnings in the broader population making it difficult to generalize the results from the paper since they only consider homogeneous treatment effects for a narrow subset of the population and type of education. 
+
 ### h)
+
+```{r}
+df <- read_dta('data/CENSUS7080.dta')
+```
+
+```{r, warning=FALSE,message=F}
+census_df <- df %>%
+  mutate(factor_yob = as.factor(YOB),
+         factor_qob = as.factor(QOB)) %>% 
+  dummy_cols(select_columns=c('factor_yob','factor_qob'),
+             remove_first_dummy=TRUE) %>%
+  
+```
+
+```{r}
+library(recipes)
+data(penguins, package = "modeldata")
+penguins <- penguins %>% na.omit()
+
+rec <- recipe(flipper_length_mm ~ ., data = penguins)
+
+int_mod_1 <- rec %>%
+  step_interact(terms = ~ bill_depth_mm:bill_length_mm)
+
+# specify all dummy variables succinctly with `starts_with()`
+int_mod_2 <- rec %>%
+  step_dummy(sex, species, island) %>%
+  step_interact(terms = ~ body_mass_g:starts_with("species"))
+
+int_mod_1 <- prep(int_mod_1, training = penguins)
+int_mod_2 <- prep(int_mod_2, training = penguins)
+
+dat_1 <- bake(int_mod_1, penguins)
+dat_2 <- bake(int_mod_2, penguins)
+
+names(dat_1)
+names(dat_2)
+
+tidy(int_mod_1, number = 1)
+tidy(int_mod_2, number = 2)
+
+```
 
 ### i)
 
