@@ -18,7 +18,8 @@ library(lmtest)
 library(sandwich)
 library(broom)
 library(whitestrap)
-library(fastDummies)
+library(recipes)
+library(ivreg)
 options(scipen=999)
 ```
 
@@ -65,7 +66,7 @@ If econ_cost is not truly exogenous in the structural model, then we will get a 
 
 ### h)
 
-If econ_cost is a weak instrument, this means that the correlation betwene econ_cost and econ is small resulting in a weak first-stage. Since the probability limit of the IV estimator $\underset{n\to \infty}{\text{plim}}$ $\tilde{\beta}_1 = \beta_1 + \displaystyle \frac{Cov(Z,U)}{Cov(X,Z)}$, even if $Cov(X,Z)$ is small, as long as exogeneity holds, the IV estimator will remain consistent. However, since $Var(\tilde{\beta}_1) = \displaystyle \frac{\sigma^2}{SST_X \rho^2_{X,Z}}$, if the instrument is weak, the variance of the IV estimator will be large. Furthermore, the bias of 2SLS can be expressed as $\mathbb{E}[\hat{\beta}^{2SLS} -\beta] \approx \frac{\sigma_{\epsilon U}}{\sigma^2_{\epsilon}} \frac{1}{F+1}$. If the instrument is weak, $F$ which is the population analogue of the F-stat for the joint significance of the instruments in the first-stage, will be small. This causes the bias of 2SLS to approach that of OLS, resulting in the IV estimator giving a biased estimate of $\beta_1$.
+If econ_cost is a weak instrument, this means that the correlation betwene econ_cost and econ is small resulting in a weak first-stage. Since the probability limit of the IV estimator $\underset{n\to \infty}{\text{plim}}$ $\tilde{\beta}_1 = \beta_1 + \displaystyle \frac{Cov(Z,U)}{Cov(X,Z)}$, even if $Cov(X,Z)$ is small, as long as exogeneity holds, the IV estimator will remain consistent. However, since $Var(\tilde{\beta}_1) = \displaystyle \frac{\sigma^2}{SST_X \rho^2_{X,Z}}$, if the instrument is weak, the variance of the IV estimator will be large. Furthermore, the bias of 2SLS can be expressed as $\displaystyle \mathbb{E}[\hat{\beta}^{2SLS} -\beta] \approx \frac{\sigma_{\epsilon U}}{\sigma^2_{\epsilon}} \frac{1}{F+1}$. If the instrument is weak, $F$ which is the population analogue of the F-stat for the joint significance of the instruments in the first-stage, will be small. This causes the bias of 2SLS to approach that of OLS, resulting in the IV estimator giving a biased estimate of $\beta_1$.
 
 If econ_cost is both a weak instrument and exogeneity is violated, we can see from the first equation above that $\tilde{\beta}_1$ will no longer be a consistent estimator for $\beta_1$ since $Cov(X,Z)$ is small while $Cov(Z,U) \ne 0$, meaning that the additional term will not go to zero and $\tilde{\beta}_1$ will not converge in probability to $\beta_1$. In this case, we would prefer the OLS estimator $\hat{\beta}_1$ to the IV estimator because the OLS estimator has smaller asymptotic variance. 
 
@@ -112,35 +113,230 @@ df <- read_dta('data/CENSUS7080.dta')
 ```
 
 ```{r, warning=FALSE,message=F}
-census_df <- df %>%
-  mutate(factor_yob = as.factor(YOB),
-         factor_qob = as.factor(QOB)) %>% 
-  dummy_cols(select_columns=c('factor_yob','factor_qob'),
-             remove_first_dummy=TRUE) %>%
-  
-```
-
-```{r, warning=FALSE,message=F}
-census_df <- df %>%
+tab4_df <- df %>%
+  filter((YOB >= 1920) & (YOB < 1930) & (CENSUS == 70)) %>%
   mutate(yob = as.factor(YOB),
-         qob = as.factor(QOB))
-first_stage <- recipe(EDUC ~ ., data = census_df)
+         qob = as.factor(QOB)) %>%
+  select(!c(YOB,QOB))
+first_stage <- recipe(EDUC ~ ., data = tab4_df)
 
-census_df <- first_stage %>%
-  step_dummy(yob,qob) %>%
+tab4_df <- first_stage %>%
+  step_dummy(yob,qob,one_hot = T) %>%
   step_interact(terms = ~ starts_with("qob"):starts_with("yob")) %>%
-  prep(training = census_df) %>%
-  bake(census_df) %>%
+  prep(training = tab4_df) %>%
+  bake(tab4_df) %>%
   mutate(age_square = AGEQ^2)
 ```
 
-```{r}
-
+```{r, fig.dim=c(5,4), out.width='75%'}
+ggplot(data = df, aes(x=YOB)) + 
+  geom_density()
+ggplot(data = df, aes(x=QOB)) + 
+  geom_histogram(bins=length(unique(df$QOB)))
+edu_sum <- df %>% 
+  group_by(QOB) %>%
+  summarise(mean_edu = mean(EDUC),.groups='keep')
+edu_sum
 ```
+
 
 ### i)
 
+```{r warning=F}
+yobxq_dummies <- colnames(tab4_df)[str_detect(colnames(tab4_df),'_yob_')]
+year_dummies <- setdiff(colnames(tab4_df)[str_detect(colnames(tab4_df),'yob')],yobxq_dummies)
+reg_dummies <- c('ENOCENT','ESOCENT','MIDATL','MT','NEWENG','SOATL','WNOCENT','WSOCENT')
+
+#first stage
+tab4_tsls <- tab4_df
+tab4_tsls$EDUC <- lm(paste('EDUC ~',paste(yobxq_dummies,collapse='+')),data=tab4_df)$fitted.values
+
+#table 4 regressions
+tab4_col1 <- lm(paste('LWKLYWGE ~ EDUC + ',paste(year_dummies,collapse='+')), data=tab4_df)
+tab4_col2 <- lm(paste('LWKLYWGE ~ EDUC + ',paste(year_dummies,collapse='+')), data=tab4_tsls)
+tab4_col3 <- lm(paste('LWKLYWGE ~ EDUC + AGEQ + age_square + ' ,paste(year_dummies,collapse='+')), data=tab4_df)
+tab4_col4 <- lm(paste('LWKLYWGE ~ EDUC + AGEQ + age_square + ' ,paste(year_dummies,collapse='+')), data=tab4_tsls)
+tab4_col5 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab4_df)
+tab4_col6 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab4_tsls)
+tab4_col7 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab4_df)
+tab4_col8 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab4_tsls)
+```
+
+```{r warning=F}
+# table 4 columns 1-4
+models <- list(tab4_col1,tab4_col2,tab4_col3,tab4_col4)
+stargazer(models,
+          type='text',digits=4,column.sep.width = "-15pt",
+          dep.var.labels=c('(1) OLS','(2) TSLS','(3) OLS','(4) TSLS'),
+          keep = 1:4, keep.stat = c('chi2'),
+          title='Table IV (1-4)')
+```
+
+```{r warning=F}
+# table 4 columns 5-8
+models <- list(tab4_col5,tab4_col6,tab4_col7,tab4_col8)
+stargazer(models,
+          type='text',digits=4,column.sep.width = "-15pt",
+          dep.var.labels=c('(5) OLS','(6) TSLS','(7) OLS','(8) TSLS'),
+          keep = 1:7, keep.stat = c('chi2'),
+          title='Table IV (5-8)')
+```
+
+```{r warning=F}
+tab5_df <- df %>%
+  filter((YOB >= 1930) & (YOB < 1940) & (CENSUS == 80)) %>%
+  mutate(yob = as.factor(YOB),
+         qob = as.factor(QOB)) %>%
+  select(!c(YOB,QOB))
+first_stage <- recipe(EDUC ~ ., data = tab5_df)
+
+tab5_df <- first_stage %>%
+  step_dummy(yob,qob,one_hot = T) %>%
+  step_interact(terms = ~ starts_with("qob"):starts_with("yob")) %>%
+  prep(training = tab5_df) %>%
+  bake(tab5_df) %>%
+  mutate(age_square = AGEQ^2)
+
+yobxq_dummies <- colnames(tab5_df)[str_detect(colnames(tab5_df),'_yob_')]
+year_dummies <- setdiff(colnames(tab5_df)[str_detect(colnames(tab5_df),'yob')],yobxq_dummies)
+
+#first stage
+tab5_tsls <- tab5_df
+tab5_tsls$EDUC <- lm(paste('EDUC ~',paste(yobxq_dummies,collapse='+')),data=tab5_df)$fitted.values
+
+#table 5 regressions
+tab5_col1 <- lm(paste('LWKLYWGE ~ EDUC + ',paste(year_dummies,collapse='+')), data=tab5_df)
+tab5_col2 <- lm(paste('LWKLYWGE ~ EDUC + ',paste(year_dummies,collapse='+')), data=tab5_tsls)
+tab5_col3 <- lm(paste('LWKLYWGE ~ EDUC + AGEQ + age_square + ' ,paste(year_dummies,collapse='+')), data=tab5_df)
+tab5_col4 <- lm(paste('LWKLYWGE ~ EDUC + AGEQ + age_square + ' ,paste(year_dummies,collapse='+')), data=tab5_tsls)
+tab5_col5 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab5_df)
+tab5_col6 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab5_tsls)
+tab5_col7 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab5_df)
+tab5_col8 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab5_tsls)
+```
+
+```{r warning=F}
+# table 5 columns 1-4
+models <- list(tab5_col1,tab5_col2,tab5_col3,tab5_col4)
+stargazer(models,
+          type='text',digits=4,column.sep.width = "-15pt",
+          dep.var.labels=c('(1) OLS','(2) TSLS','(3) OLS','(4) TSLS'),
+          keep = 1:4, keep.stat = c('chi2'),
+          title='Table V (1-4)')
+```
+
+```{r warning=F}
+# table 5 columns 5-8
+models <- list(tab5_col5,tab5_col6,tab5_col7,tab5_col8)
+stargazer(models,
+          type='text',digits=4,column.sep.width = "-15pt",
+          dep.var.labels=c('(5) OLS','(6) TSLS','(7) OLS','(8) TSLS'),
+          keep = 1:7, keep.stat = c('chi2'),
+          title='Table V (5-8)')
+```
+
+```{r warning=F}
+tab6_df <- df %>%
+  filter((YOB >= 1940) & (YOB < 1950) & (CENSUS == 80)) %>%
+  mutate(yob = as.factor(YOB),
+         qob = as.factor(QOB)) %>%
+  select(!c(YOB,QOB))
+first_stage <- recipe(EDUC ~ ., data = tab6_df)
+
+tab6_df <- first_stage %>%
+  step_dummy(yob,qob,one_hot = T) %>%
+  step_interact(terms = ~ starts_with("qob"):starts_with("yob")) %>%
+  prep(training = tab6_df) %>%
+  bake(tab6_df) %>%
+  mutate(age_square = AGEQ^2)
+
+yobxq_dummies <- colnames(tab6_df)[str_detect(colnames(tab6_df),'_yob_')]
+year_dummies <- setdiff(colnames(tab6_df)[str_detect(colnames(tab6_df),'yob')],yobxq_dummies)
+
+#first stage
+tab6_tsls <- tab6_df
+tab6_tsls$EDUC <- lm(paste('EDUC ~',paste(yobxq_dummies,collapse='+')),data=tab6_df)$fitted.values
+
+#table 6 regressions
+tab6_col1 <- lm(paste('LWKLYWGE ~ EDUC + ',paste(year_dummies,collapse='+')), data=tab6_df)
+tab6_col2 <- lm(paste('LWKLYWGE ~ EDUC + ',paste(year_dummies,collapse='+')), data=tab6_tsls)
+tab6_col3 <- lm(paste('LWKLYWGE ~ EDUC + AGEQ + age_square + ' ,paste(year_dummies,collapse='+')), data=tab6_df)
+tab6_col4 <- lm(paste('LWKLYWGE ~ EDUC + AGEQ + age_square + ' ,paste(year_dummies,collapse='+')), data=tab6_tsls)
+tab6_col5 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab6_df)
+tab6_col6 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab6_tsls)
+tab6_col7 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab6_df)
+tab6_col8 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab6_tsls)
+```
+
+```{r warning=F}
+# table 6 columns 1-4
+models <- list(tab6_col1,tab6_col2,tab6_col3,tab6_col4)
+stargazer(models,
+          type='text',digits=4,column.sep.width = "-15pt",
+          dep.var.labels=c('(1) OLS','(2) TSLS','(3) OLS','(4) TSLS'),
+          keep = 1:4, keep.stat = c('chi2'),
+          title='Table VI (1-4)')
+```
+
+```{r warning=F}
+# table 6 columns 5-8
+models <- list(tab6_col5,tab6_col6,tab6_col7,tab6_col8)
+stargazer(models,
+          type='text',digits=4,column.sep.width = "-15pt",
+          dep.var.labels=c('(5) OLS','(6) TSLS','(7) OLS','(8) TSLS'),
+          keep = 1:7, keep.stat = c('chi2'),
+          title='Table VI (5-8)')
+```
+
+We are able to fairly closely replicate the results from the paper in that the coefficient estimates for $\beta_1$ are relatively similar, with the standard errors somewhat different. 
+
 ### j)
+
+```{r warning=F,results = FALSE}
+tab4_yobxq_dummies <- colnames(tab4_df)[str_detect(colnames(tab4_df),'_yob_')]
+tab5_yobxq_dummies <- colnames(tab5_df)[str_detect(colnames(tab5_df),'_yob_')]
+tab6_yobxq_dummies <- colnames(tab6_df)[str_detect(colnames(tab6_df),'_yob_')]
+
+tab4_fstg <- lm(paste('EDUC ~',paste(tab4_yobxq_dummies,collapse='+')),data=tab4_df)
+tab5_fstg <- lm(paste('EDUC ~',paste(tab5_yobxq_dummies,collapse='+')),data=tab5_df)
+tab6_fstg <- lm(paste('EDUC ~',paste(tab6_yobxq_dummies,collapse='+')),data=tab6_df)
+
+models <- list(tab4_fstg,tab5_fstg,tab6_fstg)
+
+stargazer(models,
+          type='latex',digits=2,column.sep.width = "-15pt",
+          dep.var.labels=c('Table IV','Table V','Table VI'),
+          keep = 1:2, keep.stat = c('f'),
+          title='First Stage for Tables IV-VI')
+```
+```{=tex}
+\begin{table}[!htbp] \centering 
+  \caption{First Stage for Tables IV-VI} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{-15pt}}lccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{3}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-4} 
+\\[-1.8ex] & \multicolumn{3}{c}{Table IV} \\ 
+\\[-1.8ex] & (1) & (2) & (3)\\ 
+\hline \\[-1.8ex] 
+ qob\_X1\_x\_yob\_X1920 & $-$0.82$^{***}$ &  &  \\ 
+  & (0.06) &  &  \\ 
+  & & & \\ 
+ qob\_X1\_x\_yob\_X1921 &  &  &  \\ 
+  &  &  &  \\ 
+  & & & \\ 
+\hline \\[-1.8ex] 
+F Statistic & 14.85$^{***}$ (df = 39) & 27.90$^{***}$ (df = 39) & 77.36$^{***}$ (df = 39) \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{3}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table}
+```
+
+From these 
 
 ## Problem 3
 
