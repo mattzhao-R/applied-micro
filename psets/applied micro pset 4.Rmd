@@ -1,6 +1,6 @@
 ---
 title: "Applied Micro PSET 4"
-author: "Matthew Zhao"
+author: "Matthew Zhao working with Cedric Elkouh"
 date: "2023-01-29"
 output: pdf_document
 ---
@@ -20,6 +20,7 @@ library(broom)
 library(whitestrap)
 library(recipes)
 library(ivreg)
+library(car)
 options(scipen=999)
 ```
 
@@ -48,7 +49,7 @@ It is easy to see how econ_cost affects econ by reducing the cost of taking the 
 ```{=tex}
 \begin{equation}
 \tag{1}
-econ = \pi_0 + \pi_1 econ_cost + \nu
+econ = \pi_0 + \pi_1 econ_{cost} + \nu
 \end{equation}
 ```
 
@@ -68,7 +69,7 @@ If econ_cost is not truly exogenous in the structural model, then we will get a 
 
 If econ_cost is a weak instrument, this means that the correlation betwene econ_cost and econ is small resulting in a weak first-stage. Since the probability limit of the IV estimator $\underset{n\to \infty}{\text{plim}}$ $\tilde{\beta}_1 = \beta_1 + \displaystyle \frac{Cov(Z,U)}{Cov(X,Z)}$, even if $Cov(X,Z)$ is small, as long as exogeneity holds, the IV estimator will remain consistent. However, since $Var(\tilde{\beta}_1) = \displaystyle \frac{\sigma^2}{SST_X \rho^2_{X,Z}}$, if the instrument is weak, the variance of the IV estimator will be large. Furthermore, the bias of 2SLS can be expressed as $\displaystyle \mathbb{E}[\hat{\beta}^{2SLS} -\beta] \approx \frac{\sigma_{\epsilon U}}{\sigma^2_{\epsilon}} \frac{1}{F+1}$. If the instrument is weak, $F$ which is the population analogue of the F-stat for the joint significance of the instruments in the first-stage, will be small. This causes the bias of 2SLS to approach that of OLS, resulting in the IV estimator giving a biased estimate of $\beta_1$.
 
-If econ_cost is both a weak instrument and exogeneity is violated, we can see from the first equation above that $\tilde{\beta}_1$ will no longer be a consistent estimator for $\beta_1$ since $Cov(X,Z)$ is small while $Cov(Z,U) \ne 0$, meaning that the additional term will not go to zero and $\tilde{\beta}_1$ will not converge in probability to $\beta_1$. In this case, we would prefer the OLS estimator $\hat{\beta}_1$ to the IV estimator because the OLS estimator has smaller asymptotic variance. **talk about bias, not variance**
+If econ_cost is both a weak instrument and exogeneity is violated, we can see from the first equation above that $\tilde{\beta}_1$ will no longer be a consistent estimator for $\beta_1$ since $Cov(X,Z)$ is small while $Cov(Z,U) \ne 0$, meaning that the additional term will not go to zero and $\tilde{\beta}_1$ will not converge in probability to $\beta_1$. In this case, we would prefer the OLS estimator $\hat{\beta}_1$ to the IV estimator if $\displaystyle \frac{\rho_{Z,U}}{\rho_{Z,X}} > \rho_{X,U}$ since in this case the bias for the OLS estimator would be smaller than that of the TSLS IV estimator. 
 
 ## Problem 2
 
@@ -317,7 +318,7 @@ stargazer(models,
           title='Table VI (5-8)')
 ```
 
-We are able to fairly closely replicate the results from the paper in that the coefficient estimates for $\beta_1$ are relatively similar, with the standard errors somewhat different. Comparing the OLS and TSLS estimates, we see that the 
+We are able to fairly closely replicate the results from the paper in that the coefficient estimates for $\beta_1$ are relatively similar, with the standard errors somewhat different. Comparing the OLS and TSLS estimates, we see that the TSLS estimates are generally larger than those of the OLS ones, potentially indicating a weak first stage. Furthermore, we see that the coefficient for TSLS varies significantly more than for OLS across specifications and samples, which could be related. 
 
 ### j)
 
@@ -350,10 +351,8 @@ tab6_fstg8 <- lm(paste('EDUC ~ RACE + SMSA + MARRIED + AGEQ + age_square + ',pas
 ```{r warning=F,results = FALSE}
 models <- list(tab4fstg2,tab4fstg4,tab4fstg6,tab4fstg8)
 
-tab4_instr <- c()
-
 stargazer(models,
-          type='latex',digits=2,column.sep.width = "-15pt",
+          type='latex',digits=2,column.sep.width = "0pt",
           dep.var.labels.include = F,
           keep = 1:2, keep.stat = c('f'),
           title='First Stage for Table IV')
@@ -363,7 +362,7 @@ stargazer(models,
 \begin{table}[!htbp] \centering 
   \caption{First Stage for Table IV} 
   \label{} 
-\begin{tabular}{@{\extracolsep{-15pt}}lcccc} 
+\begin{tabular}{@{\extracolsep{0pt}}lcccc} 
 \\[-1.8ex]\hline 
 \hline \\[-1.8ex] 
  & \multicolumn{4}{c}{\textit{Dependent variable:}} \\ 
@@ -377,7 +376,7 @@ stargazer(models,
   &  &  &  &  \\ 
   & & & & \\ 
 \hline \\[-1.8ex] 
-F Statistic & 14.85$^{***}$  & 14.85$^{***}$  & 336.30$^{***}$  & 371.35$^{***}$ \\ 
+F Statistic & 14.85$^{***}$ (df = 39) & 14.85$^{***}$ (df = 39) & 336.30$^{***}$ (df = 42) & 371.35$^{***}$ (df = 50) \\ 
 \hline 
 \hline \\[-1.8ex] 
 \textit{Note:}  & \multicolumn{4}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
@@ -389,7 +388,7 @@ F Statistic & 14.85$^{***}$  & 14.85$^{***}$  & 336.30$^{***}$  & 371.35$^{***}$
 models <- list(tab5_fstg2,tab5_fstg4,tab5_fstg6,tab5_fstg8)
 
 stargazer(models,
-          type='latex',digits=2,column.sep.width = "-15pt",
+          type='latex',digits=2,column.sep.width = "0pt",
           dep.var.labels.include = F,
           keep = 1:2, keep.stat = c('f'),
           title='First Stage for Table V')
@@ -399,7 +398,7 @@ stargazer(models,
 \begin{table}[!htbp] \centering 
   \caption{First Stage for Table V} 
   \label{} 
-\begin{tabular}{@{\extracolsep{-15pt}}lcccc} 
+\begin{tabular}{@{\extracolsep{0pt}}lcccc} 
 \\[-1.8ex]\hline 
 \hline \\[-1.8ex] 
  & \multicolumn{4}{c}{\textit{Dependent variable:}} \\ 
@@ -413,7 +412,7 @@ stargazer(models,
   &  &  &  &  \\ 
   & & & & \\ 
 \hline \\[-1.8ex] 
-F Statistic & 27.90$^{***}$  & 27.21$^{***}$  & 333.62$^{***}$ (df = 43) & 398.38$^{***}$  \\ 
+F Statistic & 27.90$^{***}$ (df = 39) & 27.21$^{***}$ (df = 40) & 333.62$^{***}$ (df = 43) & 398.38$^{***}$ (df = 51) \\ 
 \hline 
 \hline \\[-1.8ex] 
 \textit{Note:}  & \multicolumn{4}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
@@ -425,7 +424,7 @@ F Statistic & 27.90$^{***}$  & 27.21$^{***}$  & 333.62$^{***}$ (df = 43) & 398.3
 models <- list(tab6_fstg2,tab6_fstg4,tab6_fstg6,tab6_fstg8)
 
 stargazer(models,
-          type='latex',digits=2,column.sep.width = "-15pt",
+          type='latex',digits=2,column.sep.width = "0pt",
           dep.var.labels.include = F,
           keep = 1:2, keep.stat = c('f'),
           title='First Stage for Table VI')
@@ -435,7 +434,7 @@ stargazer(models,
 \begin{table}[!htbp] \centering 
   \caption{First Stage for Table VI} 
   \label{} 
-\begin{tabular}{@{\extracolsep{-15pt}}lcccc} 
+\begin{tabular}{@{\extracolsep{0pt}}lcccc} 
 \\[-1.8ex]\hline 
 \hline \\[-1.8ex] 
  & \multicolumn{4}{c}{\textit{Dependent variable:}} \\ 
@@ -449,7 +448,7 @@ stargazer(models,
   &  &  &  &  \\ 
   & & & & \\ 
 \hline \\[-1.8ex] 
-F Statistic & 77.36$^{***}$  & 75.44$^{***}$  & 442.76$^{***}$ (df = 43) & 507.20$^{***}$  \\ 
+F Statistic & 77.36$^{***}$ (df = 39) & 75.44$^{***}$ (df = 40) & 442.76$^{***}$ (df = 43) & 507.20$^{***}$ (df = 51) \\ 
 \hline 
 \hline \\[-1.8ex] 
 \textit{Note:}  & \multicolumn{4}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
@@ -457,8 +456,10 @@ F Statistic & 77.36$^{***}$  & 75.44$^{***}$  & 442.76$^{***}$ (df = 43) & 507.2
 \end{table}
 ```
 
-From these 
+From these first stage regressions, we see that the first stage regression is somewhat weak for the first two specifications of Table IV (just above 10) which could be a sign of a weak instrument issue. We do not see these with Tables V and VI where the joint F-tests for the first two specifications of both have F stat over 10, but we cannot rule out the possibility of weak instruments. 
 
 ## Problem 3
 
 ### a)
+
+Currently our plan for paper extension is to determine the elasticity of demand for coal in the United States since the paper we are replicating does this in China. Typically when estimating demand elasticities, an instrumental variables strategy is used due to the simultaneity problem of price. As such, we plan to use the size of coal seams as an instrument for coal price since the size of a coal seam naturally impacts the supply of coal without any impact on the demand curve. Since the size of coal seams is random (determined by nature), it satisfies exogeneity. Furthermore, since it directly impacts the supply of coal, it will have an impact on coal prices, thus satisfying the relevance assumption. 
