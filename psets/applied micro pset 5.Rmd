@@ -1,0 +1,30 @@
+---
+title: "Applied Micro PSET 5"
+author: "Matthew Zhao"
+date: "2023-02-04"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(haven)
+library(stargazer)
+library(xtable)
+library(lmtest)
+library(sandwich)
+library(broom)
+library(whitestrap)
+library(recipes)
+library(ivreg)
+library(car)
+options(scipen=999)
+```
+
+## Question 1
+
+### a)
+
