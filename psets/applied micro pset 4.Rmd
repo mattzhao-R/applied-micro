@@ -147,18 +147,27 @@ yobxq_dummies <- colnames(tab4_df)[str_detect(colnames(tab4_df),'_yob_')]
 year_dummies <- setdiff(colnames(tab4_df)[str_detect(colnames(tab4_df),'yob')],yobxq_dummies)
 reg_dummies <- c('ENOCENT','ESOCENT','MIDATL','MT','NEWENG','SOATL','WNOCENT','WSOCENT')
 
-#first stage
 tab4_tsls <- tab4_df
-tab4_tsls$EDUC <- lm(paste('EDUC ~',paste(yobxq_dummies,collapse='+')),data=tab4_df)$fitted.values
 
 #table 4 regressions
 tab4_col1 <- lm(paste('LWKLYWGE ~ EDUC + ',paste(year_dummies,collapse='+')), data=tab4_df)
+
+tab4_tsls$EDUC <- lm(paste('EDUC ~',paste(yobxq_dummies,collapse='+'),'+',paste(year_dummies,collapse='+')),data=tab4_df)$fitted.values
 tab4_col2 <- lm(paste('LWKLYWGE ~ EDUC + ',paste(year_dummies,collapse='+')), data=tab4_tsls)
+
 tab4_col3 <- lm(paste('LWKLYWGE ~ EDUC + AGEQ + age_square + ' ,paste(year_dummies,collapse='+')), data=tab4_df)
+
+tab4_tsls$EDUC <- lm(paste('EDUC ~ AGEQ + age_square + ',paste(yobxq_dummies,collapse='+'),'+',paste(year_dummies,collapse='+')),data=tab4_df)$fitted.values
 tab4_col4 <- lm(paste('LWKLYWGE ~ EDUC + AGEQ + age_square + ' ,paste(year_dummies,collapse='+')), data=tab4_tsls)
+
 tab4_col5 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab4_df)
+
+tab4_tsls$EDUC <- lm(paste('EDUC ~ RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(yobxq_dummies,collapse='+'),'+',paste(year_dummies,collapse='+')),data=tab4_df)$fitted.values
 tab4_col6 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab4_tsls)
+
 tab4_col7 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab4_df)
+
+tab4_tsls$EDUC <- lm(paste('EDUC ~ RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(yobxq_dummies,collapse='+'),'+',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')),data=tab4_df)$fitted.values
 tab4_col8 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab4_tsls)
 ```
 
@@ -166,9 +175,9 @@ tab4_col8 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + AGEQ + age_squa
 # table 4 columns 1-4
 models <- list(tab4_col1,tab4_col2,tab4_col3,tab4_col4)
 stargazer(models,
-          type='text',digits=4,column.sep.width = "-15pt",
-          dep.var.labels=c('(1) OLS','(2) TSLS','(3) OLS','(4) TSLS'),
+          type='text',digits=4, column.sep.width = "-15pt",
           keep = 1:4, keep.stat = c('chi2'),
+          dep.var.labels.include = F,
           title='Table IV (1-4)')
 ```
 
@@ -177,7 +186,7 @@ stargazer(models,
 models <- list(tab4_col5,tab4_col6,tab4_col7,tab4_col8)
 stargazer(models,
           type='text',digits=4,column.sep.width = "-15pt",
-          dep.var.labels=c('(5) OLS','(6) TSLS','(7) OLS','(8) TSLS'),
+          dep.var.labels.include = F,
           keep = 1:7, keep.stat = c('chi2'),
           title='Table IV (5-8)')
 ```
@@ -199,19 +208,29 @@ tab5_df <- first_stage %>%
 
 yobxq_dummies <- colnames(tab5_df)[str_detect(colnames(tab5_df),'_yob_')]
 year_dummies <- setdiff(colnames(tab5_df)[str_detect(colnames(tab5_df),'yob')],yobxq_dummies)
+reg_dummies <- c('ENOCENT','ESOCENT','MIDATL','MT','NEWENG','SOATL','WNOCENT','WSOCENT')
 
-#first stage
 tab5_tsls <- tab5_df
-tab5_tsls$EDUC <- lm(paste('EDUC ~',paste(yobxq_dummies,collapse='+')),data=tab5_df)$fitted.values
 
 #table 5 regressions
 tab5_col1 <- lm(paste('LWKLYWGE ~ EDUC + ',paste(year_dummies,collapse='+')), data=tab5_df)
+
+tab5_tsls$EDUC <- lm(paste('EDUC ~',paste(yobxq_dummies,collapse='+'),'+',paste(year_dummies,collapse='+')),data=tab5_df)$fitted.values
 tab5_col2 <- lm(paste('LWKLYWGE ~ EDUC + ',paste(year_dummies,collapse='+')), data=tab5_tsls)
+
 tab5_col3 <- lm(paste('LWKLYWGE ~ EDUC + AGEQ + age_square + ' ,paste(year_dummies,collapse='+')), data=tab5_df)
+
+tab5_tsls$EDUC <- lm(paste('EDUC ~ AGEQ + age_square + ',paste(yobxq_dummies,collapse='+'),'+',paste(year_dummies,collapse='+')),data=tab5_df)$fitted.values
 tab5_col4 <- lm(paste('LWKLYWGE ~ EDUC + AGEQ + age_square + ' ,paste(year_dummies,collapse='+')), data=tab5_tsls)
+
 tab5_col5 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab5_df)
+
+tab5_tsls$EDUC <- lm(paste('EDUC ~ RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(yobxq_dummies,collapse='+'),'+',paste(year_dummies,collapse='+')),data=tab5_df)$fitted.values
 tab5_col6 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab5_tsls)
+
 tab5_col7 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab5_df)
+
+tab5_tsls$EDUC <- lm(paste('EDUC ~ RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(yobxq_dummies,collapse='+'),'+',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')),data=tab5_df)$fitted.values
 tab5_col8 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab5_tsls)
 ```
 
@@ -220,7 +239,7 @@ tab5_col8 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + AGEQ + age_squa
 models <- list(tab5_col1,tab5_col2,tab5_col3,tab5_col4)
 stargazer(models,
           type='text',digits=4,column.sep.width = "-15pt",
-          dep.var.labels=c('(1) OLS','(2) TSLS','(3) OLS','(4) TSLS'),
+          dep.var.labels.include = F,
           keep = 1:4, keep.stat = c('chi2'),
           title='Table V (1-4)')
 ```
@@ -230,7 +249,7 @@ stargazer(models,
 models <- list(tab5_col5,tab5_col6,tab5_col7,tab5_col8)
 stargazer(models,
           type='text',digits=4,column.sep.width = "-15pt",
-          dep.var.labels=c('(5) OLS','(6) TSLS','(7) OLS','(8) TSLS'),
+          dep.var.labels.include = F,
           keep = 1:7, keep.stat = c('chi2'),
           title='Table V (5-8)')
 ```
@@ -252,19 +271,29 @@ tab6_df <- first_stage %>%
 
 yobxq_dummies <- colnames(tab6_df)[str_detect(colnames(tab6_df),'_yob_')]
 year_dummies <- setdiff(colnames(tab6_df)[str_detect(colnames(tab6_df),'yob')],yobxq_dummies)
+reg_dummies <- c('ENOCENT','ESOCENT','MIDATL','MT','NEWENG','SOATL','WNOCENT','WSOCENT')
 
-#first stage
 tab6_tsls <- tab6_df
-tab6_tsls$EDUC <- lm(paste('EDUC ~',paste(yobxq_dummies,collapse='+')),data=tab6_df)$fitted.values
 
 #table 6 regressions
 tab6_col1 <- lm(paste('LWKLYWGE ~ EDUC + ',paste(year_dummies,collapse='+')), data=tab6_df)
+
+tab6_tsls$EDUC <- lm(paste('EDUC ~',paste(yobxq_dummies,collapse='+'),'+',paste(year_dummies,collapse='+')),data=tab6_df)$fitted.values
 tab6_col2 <- lm(paste('LWKLYWGE ~ EDUC + ',paste(year_dummies,collapse='+')), data=tab6_tsls)
+
 tab6_col3 <- lm(paste('LWKLYWGE ~ EDUC + AGEQ + age_square + ' ,paste(year_dummies,collapse='+')), data=tab6_df)
+
+tab6_tsls$EDUC <- lm(paste('EDUC ~ AGEQ + age_square + ',paste(yobxq_dummies,collapse='+'),'+',paste(year_dummies,collapse='+')),data=tab6_df)$fitted.values
 tab6_col4 <- lm(paste('LWKLYWGE ~ EDUC + AGEQ + age_square + ' ,paste(year_dummies,collapse='+')), data=tab6_tsls)
+
 tab6_col5 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab6_df)
+
+tab6_tsls$EDUC <- lm(paste('EDUC ~ RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(yobxq_dummies,collapse='+'),'+',paste(year_dummies,collapse='+')),data=tab6_df)$fitted.values
 tab6_col6 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab6_tsls)
+
 tab6_col7 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab6_df)
+
+tab6_tsls$EDUC <- lm(paste('EDUC ~ RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(yobxq_dummies,collapse='+'),'+',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')),data=tab6_df)$fitted.values
 tab6_col8 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')), data=tab6_tsls)
 ```
 
@@ -273,7 +302,7 @@ tab6_col8 <- lm(paste('LWKLYWGE ~ EDUC + RACE + SMSA + MARRIED + AGEQ + age_squa
 models <- list(tab6_col1,tab6_col2,tab6_col3,tab6_col4)
 stargazer(models,
           type='text',digits=4,column.sep.width = "-15pt",
-          dep.var.labels=c('(1) OLS','(2) TSLS','(3) OLS','(4) TSLS'),
+          dep.var.labels.include = F,
           keep = 1:4, keep.stat = c('chi2'),
           title='Table VI (1-4)')
 ```
@@ -283,12 +312,12 @@ stargazer(models,
 models <- list(tab6_col5,tab6_col6,tab6_col7,tab6_col8)
 stargazer(models,
           type='text',digits=4,column.sep.width = "-15pt",
-          dep.var.labels=c('(5) OLS','(6) TSLS','(7) OLS','(8) TSLS'),
+          dep.var.labels.include = F,
           keep = 1:7, keep.stat = c('chi2'),
           title='Table VI (5-8)')
 ```
 
-We are able to fairly closely replicate the results from the paper in that the coefficient estimates for $\beta_1$ are relatively similar, with the standard errors somewhat different. 
+We are able to fairly closely replicate the results from the paper in that the coefficient estimates for $\beta_1$ are relatively similar, with the standard errors somewhat different. Comparing the OLS and TSLS estimates, we see that the 
 
 ### j)
 
@@ -297,41 +326,133 @@ tab4_yobxq_dummies <- colnames(tab4_df)[str_detect(colnames(tab4_df),'_yob_')]
 tab5_yobxq_dummies <- colnames(tab5_df)[str_detect(colnames(tab5_df),'_yob_')]
 tab6_yobxq_dummies <- colnames(tab6_df)[str_detect(colnames(tab6_df),'_yob_')]
 
-tab4_fstg <- lm(paste('EDUC ~',paste(tab4_yobxq_dummies,collapse='+')),data=tab4_df)
-tab5_fstg <- lm(paste('EDUC ~',paste(tab5_yobxq_dummies,collapse='+')),data=tab5_df)
-tab6_fstg <- lm(paste('EDUC ~',paste(tab6_yobxq_dummies,collapse='+')),data=tab6_df)
+tab4_year_dummies <- setdiff(colnames(tab4_df)[str_detect(colnames(tab4_df),'yob')],tab4_yobxq_dummies)
+tab5_year_dummies <- setdiff(colnames(tab5_df)[str_detect(colnames(tab5_df),'yob')],tab5_yobxq_dummies)
+tab6_year_dummies <- setdiff(colnames(tab6_df)[str_detect(colnames(tab6_df),'yob')],tab6_yobxq_dummies)
 
-models <- list(tab4_fstg,tab5_fstg,tab6_fstg)
+tab4fstg2 <- lm(paste('EDUC ~',paste(tab4_yobxq_dummies,collapse='+'),'+',paste(tab4_year_dummies,collapse='+')),data=tab4_df)
+tab4fstg4 <- lm(paste('EDUC ~ AGEQ + age_square + ',paste(tab4_yobxq_dummies,collapse='+'),'+',paste(tab4_year_dummies,collapse='+')),data=tab4_df)
+tab4fstg6 <- lm(paste('EDUC ~ RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(tab4_yobxq_dummies,collapse='+'),'+',paste(tab4_year_dummies,collapse='+')),data=tab4_df)
+tab4fstg8 <- lm(paste('EDUC ~ RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(tab4_yobxq_dummies,collapse='+'),'+',paste(tab4_year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')),data=tab4_df)
+
+
+tab5_fstg2 <- lm(paste('EDUC ~',paste(tab5_yobxq_dummies,collapse='+'),'+',paste(tab5_year_dummies,collapse='+')),data=tab5_df)
+tab5_fstg4 <- lm(paste('EDUC ~ AGEQ + age_square + ',paste(tab5_yobxq_dummies,collapse='+'),'+',paste(tab5_year_dummies,collapse='+')),data=tab5_df)
+tab5_fstg6 <- lm(paste('EDUC ~ RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(tab5_yobxq_dummies,collapse='+'),'+',paste(tab5_year_dummies,collapse='+')),data=tab5_df)
+tab5_fstg8 <- lm(paste('EDUC ~ RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(tab5_yobxq_dummies,collapse='+'),'+',paste(tab5_year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')),data=tab5_df)
+
+tab6_fstg2 <- lm(paste('EDUC ~',paste(tab6_yobxq_dummies,collapse='+'),'+',paste(tab6_year_dummies,collapse='+')),data=tab6_df)
+tab6_fstg4 <- lm(paste('EDUC ~ AGEQ + age_square + ',paste(tab6_yobxq_dummies,collapse='+'),'+',paste(tab6_year_dummies,collapse='+')),data=tab6_df)
+tab6_fstg6 <- lm(paste('EDUC ~ RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(tab6_yobxq_dummies,collapse='+'),'+',paste(tab6_year_dummies,collapse='+')),data=tab6_df)
+tab6_fstg8 <- lm(paste('EDUC ~ RACE + SMSA + MARRIED + AGEQ + age_square + ',paste(tab6_yobxq_dummies,collapse='+'),'+',paste(tab6_year_dummies,collapse='+'),'+',paste(reg_dummies,collapse = '+')),data=tab6_df)
+```
+
+```{r warning=F,results = FALSE}
+models <- list(tab4fstg2,tab4fstg4,tab4fstg6,tab4fstg8)
+
+tab4_instr <- c()
 
 stargazer(models,
           type='latex',digits=2,column.sep.width = "-15pt",
-          dep.var.labels=c('Table IV','Table V','Table VI'),
+          dep.var.labels.include = F,
           keep = 1:2, keep.stat = c('f'),
-          title='First Stage for Tables IV-VI')
+          title='First Stage for Table IV')
 ```
+
 ```{=tex}
 \begin{table}[!htbp] \centering 
-  \caption{First Stage for Tables IV-VI} 
+  \caption{First Stage for Table IV} 
   \label{} 
-\begin{tabular}{@{\extracolsep{-15pt}}lccc} 
+\begin{tabular}{@{\extracolsep{-15pt}}lcccc} 
 \\[-1.8ex]\hline 
 \hline \\[-1.8ex] 
- & \multicolumn{3}{c}{\textit{Dependent variable:}} \\ 
-\cline{2-4} 
-\\[-1.8ex] & \multicolumn{3}{c}{Table IV} \\ 
-\\[-1.8ex] & (1) & (2) & (3)\\ 
+ & \multicolumn{4}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-5} 
+\\[-1.8ex] & (1) & (2) & (3) & (4)\\ 
 \hline \\[-1.8ex] 
- qob\_X1\_x\_yob\_X1920 & $-$0.82$^{***}$ &  &  \\ 
-  & (0.06) &  &  \\ 
-  & & & \\ 
- qob\_X1\_x\_yob\_X1921 &  &  &  \\ 
-  &  &  &  \\ 
-  & & & \\ 
+ RACE &  &  & $-$2.52$^{***}$ & $-$2.32$^{***}$ \\ 
+  &  &  & (0.02) & (0.02) \\ 
+  & & & & \\ 
+ SMSA &  &  &  &  \\ 
+  &  &  &  &  \\ 
+  & & & & \\ 
 \hline \\[-1.8ex] 
-F Statistic & 14.85$^{***}$ (df = 39) & 27.90$^{***}$ (df = 39) & 77.36$^{***}$ (df = 39) \\ 
+F Statistic & 14.85$^{***}$  & 14.85$^{***}$  & 336.30$^{***}$  & 371.35$^{***}$ \\ 
 \hline 
 \hline \\[-1.8ex] 
-\textit{Note:}  & \multicolumn{3}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\textit{Note:}  & \multicolumn{4}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table}
+```
+
+```{r warning=F,results = FALSE}
+models <- list(tab5_fstg2,tab5_fstg4,tab5_fstg6,tab5_fstg8)
+
+stargazer(models,
+          type='latex',digits=2,column.sep.width = "-15pt",
+          dep.var.labels.include = F,
+          keep = 1:2, keep.stat = c('f'),
+          title='First Stage for Table V')
+```
+
+```{=tex}
+\begin{table}[!htbp] \centering 
+  \caption{First Stage for Table V} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{-15pt}}lcccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{4}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-5} 
+\\[-1.8ex] & (1) & (2) & (3) & (4)\\ 
+\hline \\[-1.8ex] 
+ RACE &  &  & $-$1.71$^{***}$ & $-$1.57$^{***}$ \\ 
+  &  &  & (0.02) & (0.02) \\ 
+  & & & & \\ 
+ SMSA &  &  &  &  \\ 
+  &  &  &  &  \\ 
+  & & & & \\ 
+\hline \\[-1.8ex] 
+F Statistic & 27.90$^{***}$  & 27.21$^{***}$  & 333.62$^{***}$ (df = 43) & 398.38$^{***}$  \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{4}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table}
+```
+
+```{r warning=F,results = FALSE}
+models <- list(tab6_fstg2,tab6_fstg4,tab6_fstg6,tab6_fstg8)
+
+stargazer(models,
+          type='latex',digits=2,column.sep.width = "-15pt",
+          dep.var.labels.include = F,
+          keep = 1:2, keep.stat = c('f'),
+          title='First Stage for Table VI')
+```
+
+```{=tex}
+\begin{table}[!htbp] \centering 
+  \caption{First Stage for Table VI} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{-15pt}}lcccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{4}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-5} 
+\\[-1.8ex] & (1) & (2) & (3) & (4)\\ 
+\hline \\[-1.8ex] 
+ RACE &  &  & $-$1.38$^{***}$ & $-$1.24$^{***}$ \\ 
+  &  &  & (0.02) & (0.02) \\ 
+  & & & & \\ 
+ SMSA &  &  &  &  \\ 
+  &  &  &  &  \\ 
+  & & & & \\ 
+\hline \\[-1.8ex] 
+F Statistic & 77.36$^{***}$  & 75.44$^{***}$  & 442.76$^{***}$ (df = 43) & 507.20$^{***}$  \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{4}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
 \end{tabular} 
 \end{table}
 ```
