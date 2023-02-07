@@ -142,15 +142,19 @@ We see virtually no change in the IV estimates of $\beta_1$ when using both *res
 
 ### i)
 
-The fundamental evaluation problem is that we only observe the income of individuals who smoke $Y_{D=1}(1)$ and those who don't $Y_{D=0}(0)$. However, the true causal effect of smoking on income for those who smoke (TT) is $Y_{D=1}(1) - Y_{D=0}(1)$, i.e. the difference in income for an individual who smokes if they did not smoke. Since we do not observe the counterfactual for either group ($Y_{D=0}(1)$ and $Y_{D=1}(0)$), we cannot directly discover the causal effect. Furthermore, in the case of 
+The fundamental evaluation problem is that we only observe the income of individuals who smoke $Y_{D=1}(1)$ and those who don't $Y_{D=0}(0)$. However, the true causal effect of smoking on income for those who smoke (TT) is $Y_{D=1}(1) - Y_{D=0}(1)$, i.e. the difference in income for an individual who smokes if they did not smoke. Since we do not observe the counterfactual for either group ($Y_{D=0}(1)$ and $Y_{D=1}(0)$), we cannot directly discover the causal effect. 
 
 ### j)
 
+$E[lincome | smoking = 1] - E[lincome | smoking = 0]$ can be expressed in potential outcomes notation as $E[Y(1)|D = 1] - E[Y(0)|D = 0]$, where $E[Y(1)|D = 1]$ is the expected log income for an individual who smokes ($Y(1)$) given that they're a smoker ($D=1$) and $E[Y(0)|D = 0]$ is the expected log income for an individual who does not smoke ($Y(0)$) given that they're not a smoker ($D=0$). By adding and subtracting $E[Y(0)|D = 1]$, we can simplify this expression into $E[Y(1) - Y(0)|D = 1] + E[Y(0)|D = 1] - E[Y(0)|D = 0]$. The first part of the expression ($E[Y(1) - Y(0)|D = 1]$) represents a parameter of interest known as the average treatment effect for the treated, and can be interpreted as the expected causal effect of smoking on *lincome* for those who are smokers. The other term ($E[Y(0)|D = 1] - E[Y(0)|D = 0]$) represents what is called selection bias, the unobserved difference in *lincome* between those who are smokers if they did not smoke and those who are not smokers and do not smoke. 
 
+Based on this decomposition, it is apparent why we cannot immediately interpret $E[lincome | smoking = 1] - E[lincome | smoking = 0]$ as the causal effect of *smoking* on *lincome*. In particular, if the previously mentioned selection bias term is not equal to zero, that is, there is some fundamental difference in expected income between smokers and nonsmokers not captured by the fact that one group smokes and the other does not, we cannot immediately use the observed *lincome* of smokers and nonsmokers to determine the causal effect of *smoking* on *lincome*. 
 
 ### k)
 
+For the sake of standardized potential outcomes notation for this section, we will denote someone who smokes as $D=0$ because we hope that the instrument (restaurant smoking restrictions) induces people to no longer smoke, that is, when $Z=1$ the policymaker would hope that $D=1$ i.e. the individual no longer smokes.
 
+Broadly, the potential outcomes in this section can be expressed as $Y_{Di}(Z)$ which is the log income of an individual with treatment $D_i$ (1=smoker or 0=nonsmoker) and instrument $Z$ (1=restaurant restrictions or 0=no restrictions on smoking in restaurants). Furthermore, $D_1i$ is the smoking status of an individual with $Z=1$ that is the smoking status of an individual who lives in an area with restrictions on smoking in restaurants. 
 
 ### l)
 
