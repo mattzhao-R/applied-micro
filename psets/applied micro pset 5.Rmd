@@ -26,5 +26,209 @@ options(scipen=999)
 
 ## Question 1
 
+```{r warning=F}
+df <- read_dta('data/SMOKE.DTA')
+```
+
 ### a)
+
+```{=tex}
+\begin{equation}
+\tag{1}
+lincome_i = \beta_0 + \beta_1 cigs_i + U_i
+\end{equation}
+```
+
+The authors suspect that *cigs* which measures cigarettes smoked perday is endogenous because the number of cigarettes smoked in a given period is linked to smoking habits formed over the course of an individual's life i.e. prior period habits and actions that are unobserved. *restaurn* which is a dummy for if the individual's state of residence had restrictions on smoking in restaurants in place in 1979 satisfies the conditions for a valid instrument for *cigs* since the presence of restaurant smoking restrictions is unlikely to be related to an individual's income (exclusion) while being likely to influence the number of cigarettes an individual smokes per day (relevance).
+
+### b)
+
+```{r warning=F}
+with(data = df, cov(cigs, lincome) / var(cigs))
+```
+
+```{r warning=F}
+olsb <- lm(lincome ~ cigs, data = df)
+
+stargazer(olsb,
+          type='text',digits=5, column.sep.width = "-15pt",
+          dep.var.labels.include = F,
+          title='Table 1 - OLS Estimate of Equation (1)')
+```
+
+
+### c)
+
+```{r warning=F}
+with(data = df, cov(restaurn, lincome) / cov(restaurn, cigs))
+```
+
+```{r warning=F}
+ivc <- ivreg(lincome ~ cigs | restaurn, data = df)
+
+stargazer(ivc,
+          type='text',digits=4, column.sep.width = "-15pt",
+          dep.var.labels.include = F,
+          title='Table 2 - ivreg Estimate of Equation (1)')
+```
+
+### d)
+
+```{r warning=F}
+tsls_fstg <- lm(cigs ~ restaurn, data = df)
+tsls_sstg <- lm(lincome ~ tsls_fstg$fitted.values, data = df)
+
+stargazer(tsls_sstg,
+          type='text',digits=4, column.sep.width = "-15pt",
+          dep.var.labels.include = F,
+          title='Table 3 - TSLS Estimate of Equation (1)')
+```
+
+The standard errors are different between the two methods because in the manual method, the regression function treats the second stage as a simple linear regression where the standard error for $\hat{\beta}$ is calculated as $\displaystyle \hat{\sigma}(\hat{\beta}_{OLS}) = \frac{\sigma_U}{SST_X}$ while the ivreg function calculates the standard error for IV expressed by $\displaystyle \hat{\sigma}(\hat{\beta}_{IV}) = \frac{\sigma_U}{SST_X R^2_{X,Z}}$. Since $R^2_{X,Z}$ is bounded by 1 and 0 and is determined by the strength of the first stage relationship (in this case since the instrument is neither weak nor perfect $R^2$ is somewhere in the middle), the true standard error for the IV estimator will be larger than that of OLS, explaining the discrepancy we see here between the IV estimate in part c using the ivreg function and the manual TSLS estimate we produce in this part. 
+
+### e)
+
+We see that the OLS coefficient is insignificantly different from zero while the IV estimate is large and significantly negative at the 1% significance level. We believe that the IV estimator is likely to be a more consistent estimator of the causal effect of *cigs* on *lincome* since *cigs* is an endogenous variable that depends on unobservable habit formation and cigarette smoking activity in present and past periods. Hence, OLS is an unreliable and inconsistent estimator and we would prefer IV. **Hausman test?**
+
+### f)
+
+```{=tex}
+\begin{equation}
+\tag{2}
+lincome_i = \beta_0 + \beta_1 cigs_i + \beta_2 educ_i + \beta_3age_i + \beta_4 agesq_i + V_i
+\end{equation}
+```
+
+```{r warning=F}
+olse <- lm(lincome ~ cigs + educ + age + agesq, data = df)
+ive <- ivreg(lincome ~ cigs + educ + age + agesq | restaurn + educ + age + agesq, data = df)
+
+models <- list(olse,ive)
+
+stargazer(models,
+          type='text',digits=4, column.sep.width = "-15pt",
+          column.labels = c('OLS','IV'),
+          dep.var.labels.include = F,
+          title='Table 4 - Comparison of OLS and IV for Equation (2)')
+```
+
+For similar reasons as part (e), we would prefer the IV estimator to the OLS estimator here because while the OLS estimator is more precise, it likely suffers from omitted variable bias since we believe *cigs* to be endogenous. As a result, the OLS estimator is likely to be inconsistent and provides a biased estimate of the causal effect. As such, we would still prefer the IV estimator. 
+
+### g)
+
+We see that the magnitude of the OLS estimator for (1) is positive and significant at the 10% level, while the IV estimator is larger in magnitude and has a larger standard error than in (2). Since the standard errors are smaller in (2) for IV, this is a more precise estimate of the causal effect. As a result, we would prefer this estimate to that of (1). The difference between the magnitude of the estimator and its standard error for OLS is not particularly relevant since we believe that the estimator is inconsistent regardless of regression specification, with both suffering from omitted variable bias. 
+
+### h)
+
+```{r warning=F}
+olsh_1 <- lm(lincome ~ cigs, data = df)
+ivh_1 <- ivreg(lincome ~ cigs | restaurn + lcigpric, data = df)
+
+olsh_2 <- lm(lincome ~ cigs + educ + age + agesq, data = df)
+ivh_2 <- ivreg(lincome ~ educ + age + agesq | cigs | restaurn + lcigpric, data = df)
+
+models <- list(olsh_1,ivh_1,olsh_2,ivh_2)
+
+stargazer(models,
+          type='text',digits=4, column.sep.width = "-15pt",
+          dep.var.labels.include = F,
+          model.names = T,
+          keep.stat = c('chi2'),
+          title='Table 6 - Comparison of OLS and IV for Equations (1) and (2)',
+          notes = c('Here we use both restaurn and lcigpric as instruments for cigs.'))
+```
+
+We see virtually no change in the IV estimates of $\beta_1$ when using both *restaurn* and *lcigpric* as instruments for *cigs*. As a result, our conclusions from part (g) do not change. **Check for overidentifying restrictions?**
+
+### i)
+
+The fundamental evaluation problem is that we only observe the income of individuals who smoke $Y_{D=1}(1)$ and those who don't $Y_{D=0}(0)$. However, the true causal effect of smoking on income for those who smoke (TT) is $Y_{D=1}(1) - Y_{D=0}(1)$, i.e. the difference in income for an individual who smokes if they did not smoke. Since we do not observe the counterfactual for either group ($Y_{D=0}(1)$ and $Y_{D=1}(0)$), we cannot directly discover the causal effect. Furthermore, in the case of 
+
+### j)
+
+
+
+### k)
+
+
+
+### l)
+
+
+
+## Question 2
+
+### a)
+
+#### i)
+
+
+
+#### ii)
+
+
+
+#### iii)
+
+
+### b)
+
+#### i)
+
+
+
+#### ii)
+
+
+
+#### iii)
+
+
+
+### c)
+
+#### i)
+
+
+
+#### ii)
+
+
+
+#### iii)
+
+
+
+### d)
+
+#### i)
+
+
+
+#### ii)
+
+
+
+#### iii)
+
+
+
+
+## Problem 3
+
+### a)
+
+
+
+
+### b)
+
+
+
+
+
+### c)
+
+
+
 
