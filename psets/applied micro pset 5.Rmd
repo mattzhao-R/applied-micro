@@ -150,13 +150,50 @@ $E[lincome | smoking = 1] - E[lincome | smoking = 0]$ can be expressed in potent
 
 Based on this decomposition, it is apparent why we cannot immediately interpret $E[lincome | smoking = 1] - E[lincome | smoking = 0]$ as the causal effect of *smoking* on *lincome*. In particular, if the previously mentioned selection bias term is not equal to zero, that is, there is some fundamental difference in expected income between smokers and nonsmokers not captured by the fact that one group smokes and the other does not, we cannot immediately use the observed *lincome* of smokers and nonsmokers to determine the causal effect of *smoking* on *lincome*. 
 
+The OLS estimator of $\delta_1$ directly estimates this difference in conditional means and as such does not estimate the causal effect of *smoking* on *lincome*. 
+
+```{r}
+mean((df %>% filter(cigs > 0))$lincome) - mean((df %>% filter(cigs == 0))$lincome)
+
+temp <- df
+temp$smoking <- ifelse(temp$cigs > 0, 1, 0)
+lm(lincome ~ smoking, data= temp)$coefficients
+```
+
 ### k)
 
-For the sake of standardized potential outcomes notation for this section, we will denote someone who smokes as $D=0$ because we hope that the instrument (restaurant smoking restrictions) induces people to no longer smoke, that is, when $Z=1$ the policymaker would hope that $D=1$ i.e. the individual no longer smokes.
+For the sake of standardized potential outcomes notation for this section, we will denote someone who smokes as $D=0$ because we hope that the instrument (restaurant smoking restrictions) induces people to no longer smoke ($D=1$), that is, when $Z=1$ the policymaker would hope that $D=1$ i.e. the individual is induced to no longer smoke.
 
-Broadly, the potential outcomes in this section can be expressed as $Y_{Di}(Z)$ which is the log income of an individual with treatment $D_i$ (1=smoker or 0=nonsmoker) and instrument $Z$ (1=restaurant restrictions or 0=no restrictions on smoking in restaurants). Furthermore, $D_1i$ is the smoking status of an individual with $Z=1$ that is the smoking status of an individual who lives in an area with restrictions on smoking in restaurants. 
+Broadly, the potential outcomes in this section can be expressed as $Y_{Di}(Z)$ which is the log income of an individual with treatment $D_i$ (1=nonsmoker or 0=nonsmoker) and instrument $Z$ (1=restaurant restrictions or 0=no restrictions on smoking in restaurants). Furthermore, $D_1i$ is the smoking status of an individual with $Z=1$ i.e. the smoking status of an individual who lives in an area with restrictions on smoking in restaurants, while $D_0i$ is the smoking status of an individual with $Z=0$ i.e. the smoking status of an individual who lives in an area without restrictions on smoking in restaurants.
 
-### l)
+The potential choices in this scenario can be described via $D_{1i}$ and $D_{0i}$. $D_{1i}$ is 1 when an individual is a nonsmoker given that their area has restaurant smoking restrictions and is 0 when an individual is a smoker given that their area has restaurant smoking restrictions. $D_{0i}$ is 1 when an individual is a nonsmoker given that their area does not have restaurant smoking restrictions and is 0 when an individual is a smoker given that their area does not have restaurant smoking restrictions. 
+
+The first assumption is the independence assumption which requires that $\{Y_{Di}(1),Y_{Di}(0),D_{1i},D_{0i}\} \perp Z_i$. In this setting, this assumption states that an individual's income and their treatment status (whether or not they are a smoker) is independent of the status of restaurant smoking restrictions in their area i.e. treatment status is as good as random. **What does that mean here though?** We believe that this assumption is credible here because it is unlikely that restaurant restrictions were put in place based on individuals' income or smoking status.
+
+The second assumption is exclusion which states that the instrument only affects the outcome through the treatment, here being that restaurant smoking restrictions only affect individuals' income through smoking status. This is plausible since restaurant smoking restrictions have no impact on individuals' income besides for those who potentially work at restaurants and do smoke i.e. those induced to change smoking behaviors or leave their job due to being smokers. Individuals who are nonsmokers are naturally unaffected. We could argue that there are secondary effects to restaurant smoking restrictions that could affect income such as through increased productivity but these are difficult to argue.
+
+The third assumption is having a strong first stage i.e. that restaurant smoking restrictions have a significant effect on smoking status. This is somewhat plausible because we may believe that a number of restaurant workers were smokers prior to the restrictions being put into place and in order to keep their livelihood it is likely that some quit smoking. We show the first stage below, where we see that the Fstat is below 10, indicating that the instrument could be weak and that this assumption may be violated. 
+
+```{=tex}
+\begin{equation}
+\tag{3}
+lincome_i = \delta_0 + \delta_1 smoking_i + U_i
+\end{equation}
+```
+
+```{r warning=F}
+fstg_smoking <- lm(smoking ~ restaurn, data=temp)
+
+stargazer(fstg_smoking,
+          type='text',digits=4, column.sep.width = "-15pt",
+          dep.var.labels.include = F,
+          model.names = T,
+          keep.stat = c('f'),
+          title='Table 7 - First Stage for (3)')
+
+```
+
+The fourth assumption is monotonicity, where the instrument should have the same impact for all people who were impacted by the instrument. In this setting this assumption means that restaurant smoking restrictions should have induced the same change in smoking status for all individuals who changed smoking status due to restaurant smoking restrictions. More specifically, while restaurant smoking restrictions may not have changed an individual's smoking status, there should be no individuals who were induced to smoke due to restaurant smoking restrictions. This assumption is likely reasonably satisfied since there is not likely any consistent reason for restaurant smoking restrictions to cause individuals to begin smoking. 
 
 
 
