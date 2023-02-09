@@ -193,65 +193,69 @@ stargazer(fstg_smoking,
 
 ```
 
-The fourth assumption is monotonicity, where the instrument should have the same impact for all people who were impacted by the instrument. In this setting this assumption means that restaurant smoking restrictions should have induced the same change in smoking status for all individuals who changed smoking status due to restaurant smoking restrictions. More specifically, while restaurant smoking restrictions may not have changed an individual's smoking status, there should be no individuals who were induced to smoke due to restaurant smoking restrictions. This assumption is likely reasonably satisfied since there is not likely any consistent reason for restaurant smoking restrictions to cause individuals to begin smoking. 
+The fourth assumption is monotonicity, where the instrument should have the same impact for all people who were impacted by the instrument. In this setting this assumption means that restaurant smoking restrictions should have induced the same change in smoking status for all individuals who changed smoking status due to restaurant smoking restrictions. More specifically, while restaurant smoking restrictions may not have changed an individual's smoking status, there should be no individuals who were induced to smoke due to restaurant smoking restrictions. This assumption is likely reasonably satisfied since there is not likely any reasonable mechanism for restaurant smoking restrictions to cause individuals to begin smoking. 
 
+IV identifies the local average treatment effect which, in this setting, is the effect of smoking on income for those who no longer smoke due to restaurant smoking restrictions. In general, it is the change in the outcome for individuals who were induced to take up the treatment due to the instrument. In this setting it may be a parameter that is relevant to policy since it identifies the causal effect of restaurant smoking restrictions on income through changing smoking habits, which is what policy makers likely hoped to affect through this policy. LATE is not likely to be similar to the ATE because we do not see that $P(D = 1 | Z = 1) = 1$ and $P(D = 1 | Z = 0) = 0$ (not all individuals are compliers).  
 
+```{r}
+mean((temp %>% filter(restaurn == 1))$smoking)
+mean((temp %>% filter(restaurn == 0))$smoking)
+```
+
+Furthermore, it is unlikely that the LATE is equal to the TT here because it is likely that there are always-takers, here meaning that there are individuals who do not smoke regardless of the presence or nonpresence of restaurant smoking restrictions. This is highly likely given that not everyone smokes and would not decide to smoke because of restaurant smoking restrictions. 
 
 ## Question 2
 
-### a)
+### i)
 
-#### i)
-
-
-
-#### ii)
+#### a)
 
 
+In Klaauw 2002, the primary outcome of interest is student enrollment decisions, specifically whether or not a student chose to enroll in College X.
 
-#### iii)
+#### b)
 
+The running variable is $S_i$ which is an index for academic ability developed by College X described in the paper as $S = \phi_0 \times (\text{first three digits of total SAT score}) + \phi_1 × GPA$. 
 
-### b)
+#### c)
 
-#### i)
+The treatment variable is $F_i$, the total amount of discretionary college aid offered by College X to individual i. It is determined by $S_i$ via the equation $F_i = E[F_i | S_i] + e_i = f(S_i) + \gamma_1 \cdot 1\{S_i \ge \bar{S}_1\} + \gamma_2 \cdot 1\{S_i \ge \bar{S}_2\} + \gamma_3 \cdot 1\{S_i \ge \bar{S}_3\} + e_i$. This is fuzzy RDD since individuals below each cutoff still are able to get some degree of financial aid, even those in the bottom most interval of the academic index. 
 
+#### d)
 
+Here, RDD has a more credible identifying assumption primarily because there is a key unobservable in this setting that RDD appears to address better than assumptions of selection on observables and exclusion via MLR: admissions and financial aid offers from other schools. In this facet, RDD appears to credibly identify the causal parameter of interest since it is believable that those just above and below each academic index cutoff are fairly similar in this unobserved variable. As a result, the assignment of more or less financial aid above and below each cutoff can be viewed as 'as good as random', resulting in a credible identification assumption. 
 
-#### ii)
+### ii)
 
-
-
-#### iii)
+#### a)
 
 
 
-### c)
-
-#### i)
+#### b)
 
 
 
-#### ii)
+#### c)
+
+
+#### d)
 
 
 
-#### iii)
+### iii)
+
+#### a)
 
 
 
-### d)
-
-#### i)
+#### b)
 
 
-
-#### ii)
+#### c)
 
 
 
-#### iii)
-
+#### d)
 
 
 
