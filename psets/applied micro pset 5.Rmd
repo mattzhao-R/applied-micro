@@ -38,7 +38,6 @@ df <- read_dta('data/SMOKE.DTA')
 lincome_i = \beta_0 + \beta_1 cigs_i + U_i
 \end{equation}
 ```
-
 The authors suspect that *cigs* which measures cigarettes smoked perday is endogenous because the number of cigarettes smoked in a given period is linked to smoking habits formed over the course of an individual's life i.e. prior period habits and actions that are unobserved. *restaurn* which is a dummy for if the individual's state of residence had restrictions on smoking in restaurants in place in 1979 satisfies the conditions for a valid instrument for *cigs* since the presence of restaurant smoking restrictions is unlikely to be related to an individual's income (exclusion) while being likely to influence the number of cigarettes an individual smokes per day (relevance).
 
 ### b)
@@ -55,7 +54,6 @@ stargazer(olsb,
           dep.var.labels.include = F,
           title='Table 1 - OLS Estimate of Equation (1)')
 ```
-
 
 ### c)
 
@@ -84,7 +82,7 @@ stargazer(tsls_sstg,
           title='Table 3 - TSLS Estimate of Equation (1)')
 ```
 
-The standard errors are different between the two methods because in the manual method, the regression function treats the second stage as a simple linear regression where the standard error for $\hat{\beta}$ is calculated as $\displaystyle \hat{\sigma}(\hat{\beta}_{OLS}) = \frac{\sigma_U}{SST_X}$ while the ivreg function calculates the standard error for IV expressed by $\displaystyle \hat{\sigma}(\hat{\beta}_{IV}) = \frac{\sigma_U}{SST_X R^2_{X,Z}}$. Since $R^2_{X,Z}$ is bounded by 1 and 0 and is determined by the strength of the first stage relationship (in this case since the instrument is neither weak nor perfect $R^2$ is somewhere in the middle), the true standard error for the IV estimator will be larger than that of OLS, explaining the discrepancy we see here between the IV estimate in part c using the ivreg function and the manual TSLS estimate we produce in this part. 
+The standard errors are different between the two methods because in the manual method, the regression function treats the second stage as a simple linear regression where the standard error for $\hat{\beta}$ is calculated as $\displaystyle \hat{\sigma}(\hat{\beta}_{OLS}) = \frac{\sigma_U}{SST_X}$ while the ivreg function calculates the standard error for IV expressed by $\displaystyle \hat{\sigma}(\hat{\beta}_{IV}) = \frac{\sigma_U}{SST_X R^2_{X,Z}}$. Since $R^2_{X,Z}$ is bounded by 1 and 0 and is determined by the strength of the first stage relationship (in this case since the instrument is neither weak nor perfect $R^2$ is somewhere in the middle), the true standard error for the IV estimator will be larger than that of OLS, explaining the discrepancy we see here between the IV estimate in part c using the ivreg function and the manual TSLS estimate we produce in this part.
 
 ### e)
 
@@ -98,7 +96,6 @@ We see that the OLS coefficient is insignificantly different from zero while the
 lincome_i = \beta_0 + \beta_1 cigs_i + \beta_2 educ_i + \beta_3age_i + \beta_4 agesq_i + V_i
 \end{equation}
 ```
-
 ```{r warning=F}
 olse <- lm(lincome ~ cigs + educ + age + agesq, data = df)
 ive <- ivreg(lincome ~ cigs + educ + age + agesq | restaurn + educ + age + agesq, data = df)
@@ -112,11 +109,11 @@ stargazer(models,
           title='Table 4 - Comparison of OLS and IV for Equation (2)')
 ```
 
-For similar reasons as part (e), we would prefer the IV estimator to the OLS estimator here because while the OLS estimator is more precise, it likely suffers from omitted variable bias since we believe *cigs* to be endogenous. As a result, the OLS estimator is likely to be inconsistent and provides a biased estimate of the causal effect. As such, we would still prefer the IV estimator. 
+For similar reasons as part (e), we would prefer the IV estimator to the OLS estimator here because while the OLS estimator is more precise, it likely suffers from omitted variable bias since we believe *cigs* to be endogenous. As a result, the OLS estimator is likely to be inconsistent and provides a biased estimate of the causal effect. As such, we would still prefer the IV estimator.
 
 ### g)
 
-We see that the magnitude of the OLS estimator for (1) is positive and significant at the 10% level, while the IV estimator is larger in magnitude and has a larger standard error than in (2). Since the standard errors are smaller in (2) for IV, this is a more precise estimate of the causal effect. As a result, we would prefer this estimate to that of (1). The difference between the magnitude of the estimator and its standard error for OLS is not particularly relevant since we believe that the estimator is inconsistent regardless of regression specification, with both suffering from omitted variable bias. 
+We see that the magnitude of the OLS estimator for (1) is positive and significant at the 10% level, while the IV estimator is larger in magnitude and has a larger standard error than in (2). Since the standard errors are smaller in (2) for IV, this is a more precise estimate of the causal effect. As a result, we would prefer this estimate to that of (1). The difference between the magnitude of the estimator and its standard error for OLS is not particularly relevant since we believe that the estimator is inconsistent regardless of regression specification, with both suffering from omitted variable bias.
 
 ### h)
 
@@ -142,15 +139,15 @@ We see virtually no change in the IV estimates of $\beta_1$ when using both *res
 
 ### i)
 
-The fundamental evaluation problem is that we only observe the income of individuals who smoke $Y_{D=1}(1)$ and those who don't $Y_{D=0}(0)$. However, the true causal effect of smoking on income for those who smoke (TT) is $Y_{D=1}(1) - Y_{D=0}(1)$, i.e. the difference in income for an individual who smokes if they did not smoke. Since we do not observe the counterfactual for either group ($Y_{D=0}(1)$ and $Y_{D=1}(0)$), we cannot directly discover the causal effect. 
+The fundamental evaluation problem is that we only observe the income of individuals who smoke $Y_{D=1}(1)$ and those who don't $Y_{D=0}(0)$. However, the true causal effect of smoking on income for those who smoke (TT) is $Y_{D=1}(1) - Y_{D=0}(1)$, i.e. the difference in income for an individual who smokes if they did not smoke. Since we do not observe the counterfactual for either group ($Y_{D=0}(1)$ and $Y_{D=1}(0)$), we cannot directly discover the causal effect.
 
 ### j)
 
-$E[lincome | smoking = 1] - E[lincome | smoking = 0]$ can be expressed in potential outcomes notation as $E[Y(1)|D = 1] - E[Y(0)|D = 0]$, where $E[Y(1)|D = 1]$ is the expected log income for an individual who smokes ($Y(1)$) given that they're a smoker ($D=1$) and $E[Y(0)|D = 0]$ is the expected log income for an individual who does not smoke ($Y(0)$) given that they're not a smoker ($D=0$). By adding and subtracting $E[Y(0)|D = 1]$, we can simplify this expression into $E[Y(1) - Y(0)|D = 1] + E[Y(0)|D = 1] - E[Y(0)|D = 0]$. The first part of the expression ($E[Y(1) - Y(0)|D = 1]$) represents a parameter of interest known as the average treatment effect for the treated, and can be interpreted as the expected causal effect of smoking on *lincome* for those who are smokers. The other term ($E[Y(0)|D = 1] - E[Y(0)|D = 0]$) represents what is called selection bias, the unobserved difference in *lincome* between those who are smokers if they did not smoke and those who are not smokers and do not smoke. 
+$E[lincome | smoking = 1] - E[lincome | smoking = 0]$ can be expressed in potential outcomes notation as $E[Y(1)|D = 1] - E[Y(0)|D = 0]$, where $E[Y(1)|D = 1]$ is the expected log income for an individual who smokes ($Y(1)$) given that they're a smoker ($D=1$) and $E[Y(0)|D = 0]$ is the expected log income for an individual who does not smoke ($Y(0)$) given that they're not a smoker ($D=0$). By adding and subtracting $E[Y(0)|D = 1]$, we can simplify this expression into $E[Y(1) - Y(0)|D = 1] + E[Y(0)|D = 1] - E[Y(0)|D = 0]$. The first part of the expression ($E[Y(1) - Y(0)|D = 1]$) represents a parameter of interest known as the average treatment effect for the treated, and can be interpreted as the expected causal effect of smoking on *lincome* for those who are smokers. The other term ($E[Y(0)|D = 1] - E[Y(0)|D = 0]$) represents what is called selection bias, the unobserved difference in *lincome* between those who are smokers if they did not smoke and those who are not smokers and do not smoke.
 
-Based on this decomposition, it is apparent why we cannot immediately interpret $E[lincome | smoking = 1] - E[lincome | smoking = 0]$ as the causal effect of *smoking* on *lincome*. In particular, if the previously mentioned selection bias term is not equal to zero, that is, there is some fundamental difference in expected income between smokers and nonsmokers not captured by the fact that one group smokes and the other does not, we cannot immediately use the observed *lincome* of smokers and nonsmokers to determine the causal effect of *smoking* on *lincome*. 
+Based on this decomposition, it is apparent why we cannot immediately interpret $E[lincome | smoking = 1] - E[lincome | smoking = 0]$ as the causal effect of *smoking* on *lincome*. In particular, if the previously mentioned selection bias term is not equal to zero, that is, there is some fundamental difference in expected income between smokers and nonsmokers not captured by the fact that one group smokes and the other does not, we cannot immediately use the observed *lincome* of smokers and nonsmokers to determine the causal effect of *smoking* on *lincome*.
 
-The OLS estimator of $\delta_1$ directly estimates this difference in conditional means and as such does not estimate the causal effect of *smoking* on *lincome*. 
+The OLS estimator of $\delta_1$ directly estimates this difference in conditional means and as such does not estimate the causal effect of *smoking* on *lincome*.
 
 ```{r}
 mean((df %>% filter(cigs > 0))$lincome) - mean((df %>% filter(cigs == 0))$lincome)
@@ -166,13 +163,13 @@ For the sake of standardized potential outcomes notation for this section, we wi
 
 Broadly, the potential outcomes in this section can be expressed as $Y_{Di}(Z)$ which is the log income of an individual with treatment $D_i$ (1=nonsmoker or 0=nonsmoker) and instrument $Z$ (1=restaurant restrictions or 0=no restrictions on smoking in restaurants). Furthermore, $D_1i$ is the smoking status of an individual with $Z=1$ i.e. the smoking status of an individual who lives in an area with restrictions on smoking in restaurants, while $D_0i$ is the smoking status of an individual with $Z=0$ i.e. the smoking status of an individual who lives in an area without restrictions on smoking in restaurants.
 
-The potential choices in this scenario can be described via $D_{1i}$ and $D_{0i}$. $D_{1i}$ is 1 when an individual is a nonsmoker given that their area has restaurant smoking restrictions and is 0 when an individual is a smoker given that their area has restaurant smoking restrictions. $D_{0i}$ is 1 when an individual is a nonsmoker given that their area does not have restaurant smoking restrictions and is 0 when an individual is a smoker given that their area does not have restaurant smoking restrictions. 
+The potential choices in this scenario can be described via $D_{1i}$ and $D_{0i}$. $D_{1i}$ is 1 when an individual is a nonsmoker given that their area has restaurant smoking restrictions and is 0 when an individual is a smoker given that their area has restaurant smoking restrictions. $D_{0i}$ is 1 when an individual is a nonsmoker given that their area does not have restaurant smoking restrictions and is 0 when an individual is a smoker given that their area does not have restaurant smoking restrictions.
 
 The first assumption is the independence assumption which requires that $\{Y_{Di}(1),Y_{Di}(0),D_{1i},D_{0i}\} \perp Z_i$. In this setting, this assumption states that an individual's income and their treatment status (whether or not they are a smoker) is independent of the status of restaurant smoking restrictions in their area i.e. treatment status is as good as random. **What does that mean here though?** We believe that this assumption is credible here because it is unlikely that restaurant restrictions were put in place based on individuals' income or smoking status.
 
 The second assumption is exclusion which states that the instrument only affects the outcome through the treatment, here being that restaurant smoking restrictions only affect individuals' income through smoking status. This is plausible since restaurant smoking restrictions have no impact on individuals' income besides for those who potentially work at restaurants and do smoke i.e. those induced to change smoking behaviors or leave their job due to being smokers. Individuals who are nonsmokers are naturally unaffected. We could argue that there are secondary effects to restaurant smoking restrictions that could affect income such as through increased productivity but these are difficult to argue.
 
-The third assumption is having a strong first stage i.e. that restaurant smoking restrictions have a significant effect on smoking status. This is somewhat plausible because we may believe that a number of restaurant workers were smokers prior to the restrictions being put into place and in order to keep their livelihood it is likely that some quit smoking. We show the first stage below, where we see that the Fstat is below 10, indicating that the instrument could be weak and that this assumption may be violated. 
+The third assumption is having a strong first stage i.e. that restaurant smoking restrictions have a significant effect on smoking status. This is somewhat plausible because we may believe that a number of restaurant workers were smokers prior to the restrictions being put into place and in order to keep their livelihood it is likely that some quit smoking. We show the first stage below, where we see that the Fstat is below 10, indicating that the instrument could be weak and that this assumption may be violated.
 
 ```{=tex}
 \begin{equation}
@@ -180,7 +177,6 @@ The third assumption is having a strong first stage i.e. that restaurant smoking
 lincome_i = \delta_0 + \delta_1 smoking_i + U_i
 \end{equation}
 ```
-
 ```{r warning=F}
 fstg_smoking <- lm(smoking ~ restaurn, data=temp)
 
@@ -193,16 +189,16 @@ stargazer(fstg_smoking,
 
 ```
 
-The fourth assumption is monotonicity, where the instrument should have the same impact for all people who were impacted by the instrument. In this setting this assumption means that restaurant smoking restrictions should have induced the same change in smoking status for all individuals who changed smoking status due to restaurant smoking restrictions. More specifically, while restaurant smoking restrictions may not have changed an individual's smoking status, there should be no individuals who were induced to smoke due to restaurant smoking restrictions. This assumption is likely reasonably satisfied since there is not likely any reasonable mechanism for restaurant smoking restrictions to cause individuals to begin smoking. 
+The fourth assumption is monotonicity, where the instrument should have the same impact for all people who were impacted by the instrument. In this setting this assumption means that restaurant smoking restrictions should have induced the same change in smoking status for all individuals who changed smoking status due to restaurant smoking restrictions. More specifically, while restaurant smoking restrictions may not have changed an individual's smoking status, there should be no individuals who were induced to smoke due to restaurant smoking restrictions. This assumption is likely reasonably satisfied since there is not likely any reasonable mechanism for restaurant smoking restrictions to cause individuals to begin smoking.
 
-IV identifies the local average treatment effect which, in this setting, is the effect of smoking on income for those who no longer smoke due to restaurant smoking restrictions. In general, it is the change in the outcome for individuals who were induced to take up the treatment due to the instrument. In this setting it may be a parameter that is relevant to policy since it identifies the causal effect of restaurant smoking restrictions on income through changing smoking habits, which is what policy makers likely hoped to affect through this policy. LATE is not likely to be similar to the ATE because we do not see that $P(D = 1 | Z = 1) = 1$ and $P(D = 1 | Z = 0) = 0$ (not all individuals are compliers).  
+IV identifies the local average treatment effect which, in this setting, is the effect of smoking on income for those who no longer smoke due to restaurant smoking restrictions. In general, it is the change in the outcome for individuals who were induced to take up the treatment due to the instrument. In this setting it may be a parameter that is relevant to policy since it identifies the causal effect of restaurant smoking restrictions on income through changing smoking habits, which is what policy makers likely hoped to affect through this policy. LATE is not likely to be similar to the ATE because we do not see that $P(D = 1 | Z = 1) = 1$ and $P(D = 1 | Z = 0) = 0$ (not all individuals are compliers).
 
 ```{r}
 mean((temp %>% filter(restaurn == 1))$smoking)
 mean((temp %>% filter(restaurn == 0))$smoking)
 ```
 
-Furthermore, it is unlikely that the LATE is equal to the TT here because it is likely that there are always-takers, here meaning that there are individuals who do not smoke regardless of the presence or nonpresence of restaurant smoking restrictions. This is highly likely given that not everyone smokes and would not decide to smoke because of restaurant smoking restrictions. 
+Furthermore, it is unlikely that the LATE is equal to the TT here because it is likely that there are always-takers, here meaning that there are individuals who do not smoke regardless of the presence or nonpresence of restaurant smoking restrictions. This is highly likely given that not everyone smokes and would not decide to smoke because of restaurant smoking restrictions.
 
 ## Question 2
 
@@ -210,54 +206,57 @@ Furthermore, it is unlikely that the LATE is equal to the TT here because it is 
 
 #### a)
 
-
 In Klaauw 2002, the primary outcome of interest is student enrollment decisions, specifically whether or not a student chose to enroll in College X.
 
 #### b)
 
-The running variable is $S_i$ which is an index for academic ability developed by College X described in the paper as $S = \phi_0 \times (\text{first three digits of total SAT score}) + \phi_1 × GPA$. 
+The running variable is $S_i$ which is an index for academic ability developed by College X described in the paper as $S = \phi_0 \times (\text{first three digits of total SAT score}) + \phi_1 × GPA$.
 
 #### c)
 
-The treatment variable is $F_i$, the total amount of discretionary college aid offered by College X to individual i. It is determined by $S_i$ via the equation $F_i = E[F_i | S_i] + e_i = f(S_i) + \gamma_1 \cdot 1\{S_i \ge \bar{S}_1\} + \gamma_2 \cdot 1\{S_i \ge \bar{S}_2\} + \gamma_3 \cdot 1\{S_i \ge \bar{S}_3\} + e_i$. This is fuzzy RDD since individuals below each cutoff still are able to get some degree of financial aid, even those in the bottom most interval of the academic index. 
+The treatment variable is $F_i$, the total amount of discretionary college aid offered by College X to individual i. It is determined by $S_i$ via the equation $F_i = E[F_i | S_i] + e_i = f(S_i) + \gamma_1 \cdot 1\{S_i \ge \bar{S}_1\} + \gamma_2 \cdot 1\{S_i \ge \bar{S}_2\} + \gamma_3 \cdot 1\{S_i \ge \bar{S}_3\} + e_i$. This is fuzzy RDD since individuals below each cutoff still are able to get some degree of financial aid, even those in the bottom most interval of the academic index. Specifically, this setting contains multiple cutoffs and levels of treatment for different levels of the running variable, making the fuzzy approach the most appropriate.
 
 #### d)
 
-Here, RDD has a more credible identifying assumption primarily because there is a key unobservable in this setting that RDD appears to address better than assumptions of selection on observables and exclusion via MLR: admissions and financial aid offers from other schools. In this facet, RDD appears to credibly identify the causal parameter of interest since it is believable that those just above and below each academic index cutoff are fairly similar in this unobserved variable. As a result, the assignment of more or less financial aid above and below each cutoff can be viewed as 'as good as random', resulting in a credible identification assumption. 
+Here, RDD has a more credible identifying assumption primarily because there is a key unobservable in this setting that RDD appears to address better than assumptions of selection on observables and exclusion via MLR: admissions and financial aid offers from other schools. In this facet, RDD appears to credibly identify the causal parameter of interest since it is believable that those just above and below each academic index cutoff are fairly similar in this unobserved variable. As a result, the assignment of more or less financial aid above and below each cutoff can be viewed as 'as good as random', resulting in a credible identification assumption.
 
 ### ii)
 
 #### a)
 
-
+The primary outcomes the authors focus on in DiNardo & Lee (2004) are survival, employment, sales, and sales per worker.
 
 #### b)
 
-
+The running variable is the share of votes that went towards unionizing.
 
 #### c)
 
+The treatment variable is unionization i.e. if workers unionize or not. Workers unionize if the majority of them vote to unionize (simple majority) so over 50%. This is a sharp RDD because workers only unionize if the majority of them vote to and do not unionize otherwise.
 
 #### d)
 
-
+This RDD has a more credible identifying assumption because in the case of MLR, there are numerous issues with potential omitted variable biases which could be due to either union organization being more successful at firms that are more likely to be successful and survive or union organization being more successful at firms that are less well organized. This creates opposite biased results and selection in unionization. Furthermore, the authors also show that on the margin i.e. workers that choose to or not to unionize by 1 or a few votes, the unions typically have similar bargaining power and that the key identifying assumption of sharp RDD $E[Y_{0i}| X_i]$ and $E[Y_{1i}| X_i]$ are continuous in $X_i$ at $X_0$, is satisfied when looking at outcomes such as wage and employment. **how do we test if sharp rdd assumption is satsified?**
 
 ### iii)
 
 #### a)
 
-
+Housing prices.
 
 #### b)
 
+Total suspended particulates (TSPs) in an area.
 
 #### c)
 
-
+The treatment variable is the regulatory status of a county, specifically whether or not they are an attainment or nonattainment county. Nonattainment counties are subject to more stringent regulations regarding air quality. The treatment variable is related to the running variable based on two rules established in the CAAAs: a county is nonattainment if the annual geometric mean concentration of TSPs exceeds 75 $\mu$g/$\text{m}^{\text{3}}$ or (2) the second-highest daily concentration of TSPs exceeds 260 $\mu$g/$\text{m}^{\text{3}}$. This is an example of sharp RDD since there is a strict cutoff for the binary treatment where below the cutoff counties are not assigned treatment and above they are. 
 
 #### d)
 
+Here MLR faces a wide range of issues. The first is the case of omitted variables bias, where the authors show that standard cross-sectional and fixed-effect estimates of the marginal willingness to pay for cleaner air is incorrect and that pollution levels (measured by TSPs) and housing prices are positively related. Furthermore, they point to potential selection issues where individuals have different preferences for levels of air quality and as such estimates may reflect preferences of subpopulations rather than true effects.
 
+RDD is more plausible because it is highly likely that counties just above and below the cutoffs for nonattainment or attainment are similar both on observable and unobservable factors since it is a matter of tiny differences in TSP concentration determining treatment status. As a result, it is likely that the assignment of treatment is 'as good as random' around the cutoff and allows us to identify the causal impact of air quality on housing prices. **same as before, how do we test the main assumption of continuity around the cutoff?**
 
 ## Problem 3
 
@@ -265,15 +264,11 @@ Here, RDD has a more credible identifying assumption primarily because there is 
 
 
 
-
 ### b)
 
 
 
-
-
 ### c)
-
 
 
 
