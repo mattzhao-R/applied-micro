@@ -262,11 +262,11 @@ RDD is more plausible because it is highly likely that counties just above and b
 
 ### a)
 
-
+The main hypothesis tested in this paper is 'is the price elasticity of coal increasing in China'?.
 
 ### b)
 
-
+The hypothesis is motivated by recent developments in China's coal industry where national price subsidies and controls have become less common, leading the authors to believe that the price elasticity could be increasing due to this policy change allowing prices to be determined more by the market. 
 
 ### c)
 
