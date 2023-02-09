@@ -270,5 +270,5 @@ The hypothesis is motivated by recent developments in China's coal industry wher
 
 ### c)
 
-
+One potential way we could use RDD to determine price elasticities is if between state/county lines there are different environmental regulations that result in different penalties/taxes on coal prices as they relate to coal contracts. It would then likely be the case that sellers and buyers between jurisdictions are similar on observable and unobservable characteristics, with the running variable being distance to nearest state border or similar jurisdiction boundary. This could also be a sharp RDD design if one state/jurisdiction does not have any penalties for coal contracts while a neighboring one does. Here, the treatment would result in a discontinuous jump in prices between two theoretically similar places and generate an exogenous change in price, allowing us to observe the difference in quantity of coal demanded, thus allowing us to determine the price elasticity of demand for coal. 
 
