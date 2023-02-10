@@ -86,7 +86,27 @@ The standard errors are different between the two methods because in the manual 
 
 ### e)
 
-We see that the OLS coefficient is insignificantly different from zero while the IV estimate is large and significantly negative at the 1% significance level. We believe that the IV estimator is likely to be a more consistent estimator of the causal effect of *cigs* on *lincome* since *cigs* is an endogenous variable that depends on unobservable habit formation and cigarette smoking activity in present and past periods. Hence, OLS is an unreliable and inconsistent estimator and we would prefer IV. **Hausman test?**
+We see that the OLS coefficient is insignificantly different from zero while the IV estimate is large and significantly negative at the 1% significance level. We believe that the IV estimator is likely to be a more consistent estimator of the causal effect of *cigs* on *lincome* since *cigs* is an endogenous variable that depends on unobservable habit formation and cigarette smoking activity in present and past periods. Hence, OLS is an inconsistent estimator and we would prefer IV. We show that OLS is inconsistent with the Hausman Test below. We also qualify the claim that while it is the case that IV is preferred since OLS is inconsistent, IV could also suffer from the weak instruments problem as shown below with first stage F-stat < 10, thus resulting in a biased estimate. 
+
+```{r warning=F}
+hausman_e <- df
+hausman_e$v <- tsls_fstg$residuals
+lm_hausman_e <- lm(lincome ~ cigs + v, data = hausman_e)
+
+stargazer(lm_hausman_e,
+          type='text',digits=4, column.sep.width = "-15pt",
+          dep.var.labels.include = F,
+          title='Regression-based Hausman Test for (1)')
+```
+
+We see here that the t-test for $\delta=0$ rejects at the 1% significance level, indicating that there is likely endogeneity.
+
+```{r warning=F}
+stargazer(tsls_fstg,
+          type='text',digits=4, column.sep.width = "-15pt",
+          dep.var.labels.include = F,
+          title='First Stage for (1)')
+```
 
 ### f)
 
@@ -109,11 +129,28 @@ stargazer(models,
           title='Table 4 - Comparison of OLS and IV for Equation (2)')
 ```
 
-For similar reasons as part (e), we would prefer the IV estimator to the OLS estimator here because while the OLS estimator is more precise, it likely suffers from omitted variable bias since we believe *cigs* to be endogenous. As a result, the OLS estimator is likely to be inconsistent and provides a biased estimate of the causal effect. As such, we would still prefer the IV estimator.
+For similar reasons as part (e), we would prefer the IV estimator to the OLS estimator here because while the OLS estimator is more precise, it likely suffers from omitted variable bias since we believe *cigs* to be endogenous. As a result, the OLS estimator is likely to be inconsistent and provides a biased estimate of the causal effect. We again show that the OLS is likely inconsistent via a Hausman Test. However, while the OLS estimator is likely inconsistent, it is also the case that the estimate for $\beta_1$ is no longer statistically significantly different from zero. As a result, while this estimator is better because it is consistent, it may not be unbiased since we see that the F-stat for the joint significant test of the instrument is less than 10. Therefore, our IV estimate could be suffering from the weak instrument problem which would bias it towards the OLS estimate 
+
+```{r warning=F}
+hausman_f <- df
+fstg_f <- lm(cigs ~ restaurn + educ + age + agesq, data=hausman_f)
+hausman_f$v <- fstg_f$residuals
+lm_hausman_f <- lm(lincome ~ cigs + v, data = hausman_f)
+
+stargazer(lm_hausman_f,
+          type='text',digits=4, column.sep.width = "-15pt",
+          dep.var.labels.include = F,
+          title='Regression-based Hausman Test for (2)')
+```
+
+```{r warning=F}
+fstg_f <- lm(cigs ~ restaurn + educ + age + agesq, data=hausman_f)
+linearHypothesis(fstg_f,c('restaurn=0'),test='F')
+```
 
 ### g)
 
-We see that the magnitude of the OLS estimator for (1) is positive and significant at the 10% level, while the IV estimator is larger in magnitude and has a larger standard error than in (2). Since the standard errors are smaller in (2) for IV, this is a more precise estimate of the causal effect. As a result, we would prefer this estimate to that of (1). The difference between the magnitude of the estimator and its standard error for OLS is not particularly relevant since we believe that the estimator is inconsistent regardless of regression specification, with both suffering from omitted variable bias.
+We see that the magnitude of the OLS estimator for (1) is positive and significant at the 10% level, while the IV estimator is larger in magnitude and has a larger standard error than in (2). Furthermore, the standard error is slightly smaller in (2) for IV and roughly similar for OLS. It is difficult to say what estimator we would prefer in this situation for a number of reasons. We would prefer neither OLS estimator since they are both inconsistent. However, when comparing the two IV estimates, we see that the estimate for $\beta_1$ is no longer significant for (2) while also having a smaller standard error, indicating that it is more precisely estimated but is not statistically different from zero to a significant level. We also should take into account the fact that both estimates suffer from the same weak instrument problem since the F-stat is less than 10 for both first stages, indicating that potentially the estimate is biased towards that of OLS (downwards in this case), which could explain why the estimate in (2) is no longer significant. As such, I would say it is most likely better to use the estimate from (2) since it is not significantly different from that of (1) while also having higher precision, but both are biased. 
 
 ### h)
 
@@ -135,7 +172,36 @@ stargazer(models,
           notes = c('Here we use both restaurn and lcigpric as instruments for cigs.'))
 ```
 
-We see virtually no change in the IV estimates of $\beta_1$ when using both *restaurn* and *lcigpric* as instruments for *cigs*. As a result, our conclusions from part (g) do not change. **Check for overidentifying restrictions?**
+In this case OLS is still inconsistent since nothing has changed for its specification. However, we can now see if the weak instrument problem mentioned earlier for IV has been resolved. 
+
+```{r warning=F}
+fstg_h1 <- ivreg(cigs ~ restaurn + lcigpric, data = df)
+fstg_h2 <- ivreg(cigs ~ restaurn + lcigpric + educ + age + agesq, data = df)
+
+linearHypothesis(fstg_h1,c('restaurn=0','lcigpric=0'),test='F')
+linearHypothesis(fstg_h2,c('restaurn=0','lcigpric=0'),test='F')
+```
+
+Sadly we see that the weak instrument problem has not been resolved and likely been made worse by adding an additional weak instrument (which we suspect *lcigpric* to be since the F-stat is now lower for both regression specifications). Naturally since this additional instrument does not result in any more explanatory power for the treatment by the instruments, we see virtually no change in the point estimates from IV for $\beta_1$ and its standard errors when using both *restaurn* and *lcigpric* as instruments for *cigs*. As a result, our conclusions from part (g) do not change. Furthermore, we test overidentifying restrictions below and find that **Check for overidentifying restrictions?**
+
+```{r warning=F}
+df_h <- df
+df_h$iv1res <- ivh_1$residuals
+df_h$iv2res <- ivh_2$residuals
+
+overid_1 <- lm(iv1res ~ restaurn + lcigpric, data=df_h)
+overid_2 <- lm(iv2res ~ restaurn + lcigpric, data=df_h)
+
+linearHypothesis(overid_1,c('restaurn=0','lcigpric=0'),test='F')
+linearHypothesis(overid_2,c('restaurn=0','lcigpric=0'),test='F')
+
+q = 2-1 #(df = 2 instruments - 1 endogenous variable)
+m = 2 # number of instruments
+pchisq(m*0.7339,q,lower.tail = F) # overid test for (1)
+pchisq(m*0.6752,q,lower.tail = F) # overid test for (1)
+```
+
+In both cases we fail to reject the null that the instruments are exogenous, indicating that the regressions do not suffer from overidentification restrictions. 
 
 ### i)
 
@@ -165,7 +231,7 @@ Broadly, the potential outcomes in this section can be expressed as $Y_{Di}(Z)$ 
 
 The potential choices in this scenario can be described via $D_{1i}$ and $D_{0i}$. $D_{1i}$ is 1 when an individual is a nonsmoker given that their area has restaurant smoking restrictions and is 0 when an individual is a smoker given that their area has restaurant smoking restrictions. $D_{0i}$ is 1 when an individual is a nonsmoker given that their area does not have restaurant smoking restrictions and is 0 when an individual is a smoker given that their area does not have restaurant smoking restrictions.
 
-The first assumption is the independence assumption which requires that $\{Y_{Di}(1),Y_{Di}(0),D_{1i},D_{0i}\} \perp Z_i$. In this setting, this assumption states that an individual's income and their treatment status (whether or not they are a smoker) is independent of the status of restaurant smoking restrictions in their area i.e. treatment status is as good as random. **What does that mean here though?** We believe that this assumption is credible here because it is unlikely that restaurant restrictions were put in place based on individuals' income or smoking status.
+The first assumption is the independence assumption which requires that $\{Y_{Di}(1),Y_{Di}(0),D_{1i},D_{0i}\} \perp Z_i$. In this setting, this assumption states that an individual's income and their treatment status (whether or not they are a smoker) is independent of the status of restaurant smoking restrictions in their area i.e. treatment status is as good as random. We believe that this assumption is credible here because it is unlikely that restaurant restrictions were put in place based on individuals' income or smoking status and that generally there is no systematic difference in treatment status or potential outcomes between those areas with restaurant restrictions and those without.
 
 The second assumption is exclusion which states that the instrument only affects the outcome through the treatment, here being that restaurant smoking restrictions only affect individuals' income through smoking status. This is plausible since restaurant smoking restrictions have no impact on individuals' income besides for those who potentially work at restaurants and do smoke i.e. those induced to change smoking behaviors or leave their job due to being smokers. Individuals who are nonsmokers are naturally unaffected. We could argue that there are secondary effects to restaurant smoking restrictions that could affect income such as through increased productivity but these are difficult to argue.
 
@@ -236,7 +302,7 @@ The treatment variable is unionization i.e. if workers unionize or not. Workers 
 
 #### d)
 
-This RDD has a more credible identifying assumption because in the case of MLR, there are numerous issues with potential omitted variable biases which could be due to either union organization being more successful at firms that are more likely to be successful and survive or union organization being more successful at firms that are less well organized. This creates opposite biased results and selection in unionization. Furthermore, the authors also show that on the margin i.e. workers that choose to or not to unionize by 1 or a few votes, the unions typically have similar bargaining power and that the key identifying assumption of sharp RDD $E[Y_{0i}| X_i]$ and $E[Y_{1i}| X_i]$ are continuous in $X_i$ at $X_0$, is satisfied when looking at outcomes such as wage and employment. **how do we test if sharp rdd assumption is satsified?**
+This RDD has a more credible identifying assumption because in the case of MLR, there are numerous issues with potential omitted variable biases which could be due to either union organization being more successful at firms that are more likely to be successful and survive or union organization being more successful at firms that are less well organized. This creates opposite biased results and selection in unionization. Furthermore, the authors also show that on the margin i.e. workers that choose to or not to unionize by 1 or a few votes, the unions typically have similar bargaining power and that the key identifying assumption of sharp RDD $E[Y_{0i}| X_i]$ and $E[Y_{1i}| X_i]$ are continuous in $X_i$ at $X_0$, appears to be satisfied when looking at outcomes such as wage and employment. 
 
 ### iii)
 
@@ -256,7 +322,7 @@ The treatment variable is the regulatory status of a county, specifically whethe
 
 Here MLR faces a wide range of issues. The first is the case of omitted variables bias, where the authors show that standard cross-sectional and fixed-effect estimates of the marginal willingness to pay for cleaner air is incorrect and that pollution levels (measured by TSPs) and housing prices are positively related. Furthermore, they point to potential selection issues where individuals have different preferences for levels of air quality and as such estimates may reflect preferences of subpopulations rather than true effects.
 
-RDD is more plausible because it is highly likely that counties just above and below the cutoffs for nonattainment or attainment are similar both on observable and unobservable factors since it is a matter of tiny differences in TSP concentration determining treatment status. As a result, it is likely that the assignment of treatment is 'as good as random' around the cutoff and allows us to identify the causal impact of air quality on housing prices. **same as before, how do we test the main assumption of continuity around the cutoff?**
+RDD is more plausible because it is highly likely that counties just above and below the cutoffs for nonattainment or attainment are similar both on observable and unobservable factors since it is a matter of tiny differences in TSP concentration determining treatment status. As a result, it is likely that the assignment of treatment is 'as good as random' around the cutoff and allows us to identify the causal impact of air quality on housing prices. 
 
 ## Problem 3
 
