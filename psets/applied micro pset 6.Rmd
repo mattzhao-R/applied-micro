@@ -24,10 +24,112 @@ library(car)
 options(scipen=999)
 ```
 
-## Question 1
+## Question 2
 
 ```{r warning=F}
-df <- read_dta('data/SMOKE.DTA')
+df <- read_dta('data/INJURY.DTA')
 ```
 
 ### a)
+
+```{=tex}
+\begin{equation}
+\tag{1}
+log(durat) = \beta_0 + \beta_1 afchnge * highearn + U_i
+\end{equation}
+```
+
+```{r warning=F}
+lm.parta = lm(ldurat ~ afhigh, data = df)
+
+stargazer(lm.parta,
+          type='text',digits=4, column.sep.width = "-15pt",
+          dep.var.labels.include = F,
+          title='Before-After estimator for treatment group')
+```
+
+Since the estimate of $\beta_1$ for equation 1 is positive and statistically significant at the 1% level, we conclude that the increase in workers' compensation resulted in increased time out of work based on this BA estimator for the treatment group. The main identifying assumption that must hold for this to be a causal interpretation is that there are no time-effects i.e. that $E[Y_{0t,pre}] = E[Y_{0t,post}]$. **is this assumption plausible**
+
+### b)
+
+```{r warning=F}
+lm.partb = lm(ldurat ~ afchnge, data = df)
+
+stargazer(lm.partb,
+          type='text',digits=4, column.sep.width = "-15pt",
+          dep.var.labels.include = F,
+          title='Before-After estimator for control group')
+```
+
+This does raise doubts because we see that the estimate for the effect of being in the post period on log duration is positive and significant at the 1% level. As such, we do not believe that the identifying assumption from before holds because we see that there is a significant difference between the outcome in pre vs post period i.e. that $E[Y_{0t,pre}] \ne E[Y_{0t,post}]$. 
+
+We can calculate the DiD estimator from the two regressions we ran in (a) and (b) by subtracting $\beta_1^{(b)}$ from $\beta_1^{(a)}$ since $\beta_1^{(a)}$ captures the effect of changing periods and treatment on log duration while $\beta_1^{(b)}$ only captures the effect of changing periods on log duration, hence subtracting the two would isolate the effect of treatment on log duration.
+
+```{r, fig.dim=c(4,6), out.width='75%'}
+df.partb <- df %>%
+  group_by(afchnge, highearn) %>%
+  summarise(mean_durat = mean(ldurat), .groups='keep')
+ggplot() + 
+  geom_point(data = df.partb %>% filter(highearn == 1), 
+             mapping = aes(x = afchnge, y = mean_durat, color = 'red')) + 
+  geom_point(data = df.partb %>% filter(highearn == 0), 
+           mapping = aes(x = afchnge, y = mean_durat, color = 'blue')) + 
+  geom_line(data = df.partb %>% filter(highearn == 1), 
+             mapping = aes(x = afchnge, y = mean_durat, color = 'red')) + 
+  geom_line(data = df.partb %>% filter(highearn == 0), 
+           mapping = aes(x = afchnge, y = mean_durat, color = 'blue')) + 
+  geom_vline(xintercept = 0.5, linetype = "dashed", alpha = 0.5) + 
+  theme_light() + ggtitle("Trends in Outcomes") +
+  xlab("Period") + ylab("Average Log Duration") +
+  coord_fixed(xlim=c(-0.1,1.1), ylim=c(1.1,1.75)) +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+### c)
+
+```{r warning=F}
+lm.partc = lm(ldurat ~ afchnge + highearn, data = df)
+
+stargazer(lm.partc,
+          type='text',digits=4, column.sep.width = "-15pt",
+          dep.var.labels.include = F,
+          title='Cross-Section estimator for treatment group')
+```
+
+Since the coefficient on highearn is positive and statistically significant at the 1% level, we can conclude that increased workers' compensation increased log time out of work based on this CS estimator. The main identifying assumption is that there is no selection bias i.e. that $E[Y_{0i} | D_i = 1] = E[Y_{0i} | D_i = 0]$ (treatment and control groups are the same). This assumption is not credible in this setting since treatment status is based on level of earnings which likely influences time out of work. We see evidence of this in the graph from part b. 
+
+### d)
+
+```{r warning=F}
+lm.partd = lm(ldurat ~ highearn, data = df)
+
+stargazer(lm.partd,
+          type='text',digits=4, column.sep.width = "-15pt",
+          dep.var.labels.include = F,
+          title='Cross-Section estimator for control group')
+```
+
+We see that the coefficient for high earning status is positive and statistically significant at the 1% level. This raises doubts about the identifying stated in part c because the significant coefficient means that there are differences in pre-period treatment and control groups i.e. that there is selection bias and $E[Y_{0i} | D_i = 1] \ne E[Y_{0i} | D_i = 0]$. We can calculate the DiD estimator from these two regressions by subtracting the coefficient **how to get this?**
+
+### e)
+
+
+
+### f)
+
+
+
+### g)
+
+
+
+### h)
+
+
+
+### i)
+
+
+
+
+
