@@ -2,7 +2,7 @@
 title: "Applied Micro PSET 6"
 author: "Matthew Zhao"
 date: "2023-02-20"
-output: pdf_ky_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -137,7 +137,7 @@ Since the coefficient on the interaction term is positive and statistically sign
 
 ### f)
 
-In this setting we would say that the DiD estimate from part e is the most credible. This is because the identifying assumptions for the other two estimates are not credible since we see time effects and that the two groups have different average outcomes in the pre-period. **can we show parallel trends with onyl pre and post periods?**
+In this setting we would say that the DiD estimate from part e is the most credible. This is because the identifying assumptions for the other two estimates are not credible since we see time effects and that the two groups have different average outcomes in the pre-period. 
 
 ### g)
 
@@ -187,14 +187,9 @@ stargazer(lm.parthiii,
           type='text',digits=4, column.sep.width = "-15pt",
           dep.var.labels.include = F,
           title='CE 4 (iii) Wooldridge (2016)')
-
-# coeftest(lm.parthiii,
-#          vcov = vcovCL,
-#          type = "HC1",
-#          cluster = ~highearn)
 ```
 
-The estimate is of similar magnitude but the standard errors are much larger resulting in the estimate not being statistically significant. **what od we make of this**
+The estimate is of similar magnitude but the standard errors are much larger resulting in the estimate not being statistically significant. This could be because the treatment has a less consistent effect in Michigan compared with Kentucky and as such there is greater variance in treatment effects which influences the standard errors.
 
 ### i)
 
