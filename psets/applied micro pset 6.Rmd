@@ -2,7 +2,7 @@
 title: "Applied Micro PSET 6"
 author: "Matthew Zhao"
 date: "2023-02-20"
-output: pdf_document
+output: pdf_ky_document
 ---
 
 ```{r setup, include=FALSE}
@@ -40,7 +40,8 @@ log(durat) = \beta + \delta afchnge + U
 ```
 
 ```{r warning=F}
-lm.parta = lm(ldurat ~ afchnge, data = df %>% filter(highearn == 1))
+df_ky = df %>% filter(ky == 1)
+lm.parta = lm(ldurat ~ afchnge, data = df_ky %>% filter(highearn == 1))
 
 stargazer(lm.parta,
           type='text',digits=4, column.sep.width = "-15pt",
@@ -53,7 +54,7 @@ Since the estimate of $\delta$ for equation 1 is positive and statistically sign
 ### b)
 
 ```{r warning=F}
-lm.partb = lm(ldurat ~ afchnge, data = df %>% filter(highearn == 0))
+lm.partb = lm(ldurat ~ afchnge, data = df_ky %>% filter(highearn == 0))
 
 stargazer(lm.partb,
           type='text',digits=4, column.sep.width = "-15pt",
@@ -63,20 +64,20 @@ stargazer(lm.partb,
 
 This does raise doubts because we see that the estimate for the effect of being in the post period on log duration is positive for the control group. As such, we do not believe that the identifying assumption from before holds because we see that there is a difference between the outcome in pre vs post period that is not due to the treatment i.e. that $E[Y_{0t,pre}] \ne E[Y_{0t,post}]$. 
 
-We can calculate the DiD estimator from the two BA estimators above by subtracting the BA estimate from part a by the estimate from part b. This will yield the DiD estimator because the BA estimator from part a captures the effect of the treatment as well as any time effects on the outcome, while the BA estimator from b captures only the time effects on the outcome. As a result, by subtracting the two we can difference out the time effects (assuming they are the same for both groups) to get the DiD estimator of the treatment effect. 
+We can calculate the DiD estimator from the two BA estimators above by subtracting the BA estimate from part a by the estimate from part b. This will yield the DiD estimator because the BA estimator from part a captures the effect of the treatment as well as any time effects on the outcome, while the BA estimator from b captures only the time effects on the outcome ($0.1983-0.0077=0.1906$). As a result, by subtracting the two we can difference out the time effects (assuming they are the same for both groups) to get the DiD estimator of the treatment effect. 
 
 ```{r, fig.dim=c(4,6), out.width='75%'}
-df.partb <- df %>%
+df_ky.partb <- df_ky %>%
   group_by(afchnge, highearn) %>%
   summarise(mean_durat = mean(ldurat), .groups='keep')
 ggplot() + 
-  geom_point(data = df.partb %>% filter(highearn == 1), 
+  geom_point(data = df_ky.partb %>% filter(highearn == 1), 
              mapping = aes(x = afchnge, y = mean_durat, color = 'red')) + 
-  geom_point(data = df.partb %>% filter(highearn == 0), 
+  geom_point(data = df_ky.partb %>% filter(highearn == 0), 
            mapping = aes(x = afchnge, y = mean_durat, color = 'blue')) + 
-  geom_line(data = df.partb %>% filter(highearn == 1), 
+  geom_line(data = df_ky.partb %>% filter(highearn == 1), 
              mapping = aes(x = afchnge, y = mean_durat, color = 'red')) + 
-  geom_line(data = df.partb %>% filter(highearn == 0), 
+  geom_line(data = df_ky.partb %>% filter(highearn == 0), 
            mapping = aes(x = afchnge, y = mean_durat, color = 'blue')) + 
   geom_vline(xintercept = 0.5, linetype = "dashed", alpha = 0.5) + 
   theme_light() + ggtitle("Trends in Outcomes") +
@@ -95,12 +96,12 @@ log(durat) = \beta_0 + \beta_1 highearn + U_i
 ```
 
 ```{r warning=F}
-lm.partc = lm(ldurat ~ highearn, data = df %>% filter(afchnge == 1))
+lm.partc = lm(ldurat ~ highearn, data = df_ky %>% filter(afchnge == 1))
 
 stargazer(lm.partc,
           type='text',digits=4, column.sep.width = "-15pt",
           dep.var.labels.include = F,
-          title='Cross-Section estimator for treatment group')
+          title='Cross-Section estimator for post-period')
 ```
 
 Since the coefficient on highearn is positive and statistically significant at the 1% level, we can conclude that increased workers' compensation increased log time out of work based on this CS estimator. The main identifying assumption is that there is no selection bias i.e. that $E[Y_{0i} | D_i = 1] = E[Y_{0i} | D_i = 0]$ (treatment and control groups are the same). This assumption is not credible in this setting since treatment status is based on level of earnings which likely influences time out of work. We see evidence of this in the graph from part b where the two groups are clearly different in the pre-period.
@@ -108,72 +109,140 @@ Since the coefficient on highearn is positive and statistically significant at t
 ### d)
 
 ```{r warning=F}
-lm.partd = lm(ldurat ~ highearn, data = df %>% filter(afchnge == 0))
+lm.partd = lm(ldurat ~ highearn, data = df_ky %>% filter(afchnge == 0))
 
 stargazer(lm.partd,
           type='text',digits=4, column.sep.width = "-15pt",
           dep.var.labels.include = F,
-          title='Cross-Section estimator for control group')
+          title='Cross-Section estimator for pre-period')
 ```
 
 We see that the coefficient for high earning status is positive and statistically significant at the 1% level. This raises doubts about the identifying stated in part c because the significant coefficient means that there are differences in outcome between the pre-period treatment and control groups i.e. that there is selection bias and $E[Y_{0i} | D_i = 1] \ne E[Y_{0i} | D_i = 0]$. 
 
-We can calculate the DiD estimator from the two CS estimators above by subtracting the CS estimate from part a by the estimate from part b. This will yield the DiD estimator because the CS estimator from part a captures the effect of being in the treatment group after treatment has been administered as well as the inherent effect of being in the treatment group on the outcome, while the CS estimator from b captures only the effect of being in the treatment group on the outcome. As a result, by subtracting the two we can difference out the difference between the treatment and control group (assuming they are time invariant) to get the DiD estimator of the treatment effect. 
+We can calculate the DiD estimator from the two CS estimators above by subtracting the CS estimate from part a by the estimate from part b. This will yield the DiD estimator because the CS estimator from part a captures the effect of being in the treatment group after treatment has been administered as well as the inherent effect of being in the treatment group on the outcome, while the CS estimator from b captures only the effect of being in the treatment group on the outcome ($0.4471 - 0.2565 = 0.1906$). As a result, by subtracting the two we can difference out the difference between the treatment and control group (assuming they are time invariant) to get the DiD estimator of the treatment effect. 
+
 
 ### e)
 
+```{r warning=F}
+lm.parte = lm(ldurat ~ afchnge + highearn + afchnge : highearn, data = df_ky)
 
+stargazer(lm.parte,
+          type='text',digits=4, column.sep.width = "-15pt",
+          dep.var.labels.include = F,
+          title='Replication of Ex 13.4 Wooldridge (2016)')
+```
+
+Since the coefficient on the interaction term is positive and statistically significant at the 1% level, we conclude that increased workers' compensation increased time out of work for the high earning group (treated). The main assumption here is parallel trends, where we assume that the average change in the outcome would have been the same for both the treatment adn control groups without treatment - $E[Y_{0i,post} - Y_{0i,pre} | D_i =1] = E[Y_{0i,post} - Y_{0i,pre} | D_i =0]$ - so that the control can serve as a valid counterfactual for the treatment group. It is the same as the estimator we calculated in b and d. 
 
 ### f)
 
-
+In this setting we would say that the DiD estimate from part e is the most credible. This is because the identifying assumptions for the other two estimates are not credible since we see time effects and that the two groups have different average outcomes in the pre-period. **can we show parallel trends with onyl pre and post periods?**
 
 ### g)
 
+#### (i)
 
+```{r warning=F}
+lm.partg = lm(ldurat ~ highearn + afchnge : highearn, data = df_ky)
+
+stargazer(lm.partg,
+          type='text',digits=3, column.sep.width = "-15pt",
+          dep.var.labels.include = F,
+          title='Replication of Prob 13.7 Wooldridge (2016)')
+```
+
+It is not surprising that the estimate of the coefficient on the interaction term is similar to the full DiD specification because when we drop the period main effect from the interaction, we are essentially no longer differencing out time effects. However, as we see from the BA estimate in part b for the control group, the time main effect is fairly weak. This means that if we believe the parallel trends assumption is credible in this setting, we expect that not differencing out time effects would have a minimal effect on the estimate of the treatment effect since time effects are negligible. 
+
+#### (ii)
+
+The coefficient is now much larger because when we do not include the treatment group indicator, we are implicitly assuming that the pre period outcomes for the treatment and control groups are the same. As a result, in this situation leaving out the indicator for treatment group causes the estimate for the coefficient on the interaction term to blow up because it attributes the large prior difference in outcomes between the treatment group and control group all to the treatment. 
 
 ### h)
 
+#### (i)
 
+```{r warning=F}
+lm.parthi = lm(ldurat ~ afchnge + highearn + afchnge : highearn + male + married + hosp + head + neck + upextr + trunk + lowback + occdis + manuf + construc, data = df_ky)
+
+stargazer(lm.parthi,
+          type='text',digits=4, column.sep.width = "-15pt",
+          dep.var.labels.include = F,
+          keep = c(1,2,14),
+          title='CE 4 (i) Wooldridge (2016)')
+```
+
+The estimate is only marginally smaller when including these additional controls and remains statistically significant. 
+
+#### (ii)
+
+While small R squared indicates that our model does not explain much of the variation in the outcome, the purpose of our model is not prediction in the sense that we are minimizing the difference between our predicted values and the actual values of the outcome. As a result, a small R squared does not mean much for our purposes since it does not affect our interpretation of the coefficients in our model, in particular the estimate of the treatment effect which is the coefficient on the interaction term, so our model is still useful for identifying the causal parameter of interest. 
+
+#### (iii)
+
+```{r warning=F}
+lm.parthiii = lm(ldurat ~ afchnge + highearn + afchnge : highearn, data = df %>% filter(mi == 1))
+
+stargazer(lm.parthiii,
+          type='text',digits=4, column.sep.width = "-15pt",
+          dep.var.labels.include = F,
+          title='CE 4 (iii) Wooldridge (2016)')
+
+# coeftest(lm.parthiii,
+#          vcov = vcovCL,
+#          type = "HC1",
+#          cluster = ~highearn)
+```
+
+The estimate is of similar magnitude but the standard errors are much larger resulting in the estimate not being statistically significant. **what od we make of this**
 
 ### i)
 
-
+Ideally we would want to collect data from more periods to show that parallel trends hold over a longer period of time. Additionally we could collect more data for alternative control groups or treatment groups and run the regression from part e to see if there are any effets. We would also run regressions using other outcomes to see if there is an effect. 
 
 ## Question 3
 
 ### a)
 
+```{r warning=F, message=F}
+library(wooldridge)
+```
 
+```{r warning=F, message=F}
+data('cps78_85')
+```
 
-### b)
+```{r warning=F, message=F}
+lm.3a = lm(lwage ~ y85 + educ + y85 : educ + exper + expersq + union + female + y85 : female, data = cps78_85)
 
+stargazer(lm.3a,
+          type='text',digits=4, column.sep.width = "-15pt",
+          dep.var.labels.include = F,
+          title='Ex 13.2 (13.1) Wooldridge (2016)')
+```
 
-
-### c)
-
-
+The wage return to education in 1978 is expected to be approxmiately 7.47%. The wage return to education for males increased by 1.85% from 1978 to 1985. The gender wage gap in 1978 was on average approximately 31.67 percent i.e. that women earned approximately 31.67% less than men in 1978. The gender wage gap has fallen by approxmiately 8.51% on average in this period between 1978 and 1985.
 
 ## Question 4
 
 ### a)
 
-
+It is likely that the population model holds in other time periods and sampling from different populations since the model describes demand elasticities which are typically negative. We could get data to look at other time periods but it may not be easy since the data is from the Chinese government. Our extension looks at similar data for the US and so looks at a different environment.
 
 ### b)
 
-
+I do not believe that the main empirical specification is reasonable since they simply use fixed effects to determine the elasticity of demand for which the identifying assumptions are likely not credible in this setting. We potentially could remedy the identification problem here by using an instrumental variable which have traditionally been used to remedy simulteneity. 
 
 ### c)
 
-
+The main variables are measuring the real world counterparts of the theoretical constructs since these are direct measures of market prices and transactions. 
 
 ### d)
 
-
+We could potentially use areas which did not see price controls loosened as the control and the treatment would be loosening of price controls in the coal market in China. Naturally our pre and post periods would be before and after these price controls were loosened.
 
 ### e)
 
-
+Our main identifying assumption would be that parallel trends hold i.e. that the time effects are the same for both the treatment and control groups. We would want to collect data from more periods before the price controls were loosened to ensure that parallel trends hold as well as test to see if any other variables change at the treatment. 
 
 
